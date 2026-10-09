@@ -1,0 +1,365 @@
+{
+  "courses": [
+    {
+      "id": "small-rpc",
+      "name": "Small Category RPC (2–25 kg)",
+      "category": "small",
+      "weightClass": "2 kg – 25 kg Payload Weight",
+      "price": 23000,
+      "originalPrice": 28000,
+      "duration": "5 Days",
+      "image": "/images/small class drone.png",
+      "badge": "DGCA Certified Standard",
+      "shortDesc": "Complete commercial remote pilot certification for standard multirotor and aerial survey drones.",
+      "description": "The foundational commercial drone pilot license certified by the Directorate General of Civil Aviation (DGCA). Covers micro to small category UAVs (up to 25 kg), flight mechanics, airspace management, and mission planning.",
+      "seatsLeft": 4,
+      "totalSeats": 12,
+      "objectFit": "cover",
+      "highlights": [
+        "5 Days Intensive DGCA Syllabus",
+        "Dual-Control Simulator & Airfield Training",
+        "DGCA Authorized Remote Pilot Certificate (RPC)",
+        "10-Year Digital Sky License Validity",
+        "Hands-on Ground Control Station (GCS) operations"
+      ],
+      "syllabus": [
+        "Day 1: DGCA Drone Rules 2021, Airspace, ATC Protocols & Meteorology",
+        "Day 2: Simulator Cockpit Sessions & Emergency Fail-Safe Scenarios",
+        "Day 3: Drone Sub-systems, Battery Safety & Pre-flight Inspection SOPs",
+        "Day 4: Solo Flight Maneuvers, Figure of 8 & Payload Simulation",
+        "Day 5: DGCA Skill Test, Practical Flight Exam & Viva Voce"
+      ],
+      "prerequisites": [
+        "Minimum Age: 18 Years",
+        "10th Standard Pass from a recognized board",
+        "Valid Indian Passport / Aadhaar Card",
+        "Class 2 Medical Fitness Certificate"
+      ]
+    },
+    {
+      "id": "medium-rpc",
+      "name": "Medium Category RPC (25–150 kg)",
+      "category": "medium",
+      "weightClass": "25 kg – 150 kg Heavy & Agri Drones",
+      "price": 27500,
+      "originalPrice": 35000,
+      "duration": "5 Days",
+      "image": "/images/medium class drone.png",
+      "badge": "Agri & Logistics Specialized",
+      "shortDesc": "Specialized commercial training for heavy agricultural spraying and cargo delivery drones.",
+      "description": "Comprehensive DGCA certification for operating heavy-lift and agricultural drones (25 kg to 150 kg). Training includes automated precision spraying calibrations, radar obstacle avoidance, and battery swarm logistics.",
+      "seatsLeft": 3,
+      "totalSeats": 10,
+      "objectFit": "contain",
+      "highlights": [
+        "Heavy Agri Sprayer (10L–30L Payload) Flight Practice",
+        "Terrain Following Radar & Swath Calibration",
+        "Digital Sky RPTO Authorization for Medium Class",
+        "Pesticide & Fertilizer Dispersion Protocols",
+        "High Current LiPo Fast-Charging & Safety"
+      ],
+      "syllabus": [
+        "Day 1: Heavy UAV Dynamics, DGCA Weight Classification & Regulations",
+        "Day 2: Medium Category Simulator Labs with Wind Drift & Payload Shift",
+        "Day 3: Agri-Payload Calibration, Nozzle Flow Rates & RTK Setup",
+        "Day 4: Field Spraying Missions, Waypoint Flight & Obstacle Evasion",
+        "Day 5: Practical DGCA Flying Assessment & Medium Category RPC Issue"
+      ],
+      "prerequisites": [
+        "Minimum Age: 18 Years",
+        "10th Standard Pass (Science/Technical background preferred)",
+        "Valid Indian Passport / Government ID",
+        "Medical Fitness Certificate (General Physician)"
+      ]
+    },
+    {
+      "id": "small-upgrade",
+      "name": "Small Category Upgrade (RPC)",
+      "category": "upgrade-small",
+      "weightClass": "For Existing Micro / Basic Pilot Holders",
+      "price": 20500,
+      "originalPrice": 24000,
+      "duration": "3 Days",
+      "image": "/images/small class drone.png",
+      "badge": "Fast Track Upgrade",
+      "shortDesc": "Bridge course for existing micro category pilots upgrading to official Small Category RPC.",
+      "description": "Accelerated 3-day conversion program for pilots who already possess basic UAV training or micro category credentials, fast-tracking to a full Small Category DGCA commercial license.",
+      "seatsLeft": 6,
+      "totalSeats": 12,
+      "objectFit": "cover",
+      "highlights": [
+        "3-Day Fast-Track Modular Schedule",
+        "Targeted Heavy Payload Simulator Drills",
+        "Airspace Clearance & Digital Sky Upgrade",
+        "Focus on Commercial Industrial Applications"
+      ],
+      "syllabus": [
+        "Day 1: Advanced DGCA Airspace Directives & 25kg Aerodynamics",
+        "Day 2: Complex Flight Simulations & Cross-Wind Hover Exercises",
+        "Day 3: DGCA Flight Skill Evaluation & Certificate Endorsement"
+      ],
+      "prerequisites": [
+        "Valid Micro Category or Prior Flight Logbook",
+        "10th Standard Pass",
+        "Medical Fitness Certificate"
+      ]
+    },
+    {
+      "id": "medium-upgrade",
+      "name": "Medium Category Upgrade (RPC)",
+      "category": "upgrade-medium",
+      "weightClass": "For Small RPC License Holders",
+      "price": 24000,
+      "originalPrice": 29000,
+      "duration": "3 Days",
+      "image": "/images/medium class drone.png",
+      "badge": "Category Elevation",
+      "shortDesc": "Direct qualification upgrade for Small RPC holders entering heavy agriculture & cargo sectors.",
+      "description": "Specialized 3-day bridge training designed for certified Small Category pilots wishing to command medium category UAVs (25kg - 150kg) for agribusiness and infrastructure contracts.",
+      "seatsLeft": 5,
+      "totalSeats": 10,
+      "objectFit": "cover",
+      "highlights": [
+        "3 Days Targeted Field Flight on Heavy Hexacopters",
+        "Agri Spraying & Liquid Slosh Dynamics Management",
+        "Immediate License Category Endorsement on Digital Sky"
+      ],
+      "syllabus": [
+        "Day 1: Heavy Class Systems, Fail-safes & Payload Physics",
+        "Day 2: 30L Agri Drone Flight Operations & RTK Auto-Mission",
+        "Day 3: Practical Exam & Medium Category License Endorsement"
+      ],
+      "prerequisites": [
+        "Active Small Category DGCA RPC License",
+        "Valid Medical Fitness Certificate"
+      ]
+    },
+    {
+      "id": "combo-package",
+      "name": "Small + Medium Category Combo",
+      "category": "combo",
+      "weightClass": "Dual Certification (2 kg to 150 kg)",
+      "price": 42500,
+      "originalPrice": 55000,
+      "duration": "7 Days",
+      "image": "/images/small + medium class.PNG",
+      "badge": "Best Value • Complete Mastery",
+      "isPopular": true,
+      "shortDesc": "Ultimate dual-category master program certifying you for both standard commercial UAVs and heavy agricultural aircraft.",
+      "description": "The premier career launchpad at Sri Eshwar Drone Tech. In 7 intensive days, obtain dual DGCA Remote Pilot Certificates for both Small (2–25 kg) and Medium (25–150 kg) categories. Save ₹8,000+ with bundled training, simulator access, and industrial field attachments.",
+      "seatsLeft": 2,
+      "totalSeats": 8,
+      "objectFit": "cover",
+      "highlights": [
+        "Dual DGCA Pilot Licenses in One Program",
+        "Certified for Surveying, Mapping & Agri Spraying",
+        "Unlimited Simulator Flight Lab Access",
+        "Free Industrial Thermography & GIS Overview Module",
+        "Priority Placement Assistance with Drone Ecosystem Partners",
+        "Includes Drone Pilot Kit & Logbook"
+      ],
+      "syllabus": [
+        "Days 1–3: Complete Small Category Ground School, Simulator & Solo Flight",
+        "Days 4–5: Medium Category Dynamics, Agri Payloads, RTK & Spraying Lab",
+        "Day 6: Advanced Industrial Scenarios (Solar/Wind Surveying demo)",
+        "Day 7: Dual DGCA Practical Examinations & License Submission"
+      ],
+      "prerequisites": [
+        "Minimum Age: 18 Years",
+        "10th Standard Pass (any stream)",
+        "Valid Passport or Aadhaar Card",
+        "Medical Fitness Certificate"
+      ]
+    }
+  ],
+  "batches": [
+    {
+      "id": "batch-regular-01",
+      "name": "Weekday Fast-Track Regular",
+      "type": "weekday",
+      "startDate": "Monday, Sep 8, 2026",
+      "endDate": "Friday, Sep 12, 2026",
+      "timing": "08:30 AM – 04:30 PM (Daily)",
+      "duration": "5 Days (40 Hours)",
+      "seatsTotal": 12,
+      "seatsLeft": 3,
+      "status": "Filling Fast",
+      "badgeColor": "#d71920"
+    },
+    {
+      "id": "batch-weekend-01",
+      "name": "Weekend Executive Batch",
+      "type": "weekend",
+      "startDate": "Saturday, Sep 13, 2026",
+      "endDate": "Sunday, Sep 28, 2026",
+      "timing": "09:00 AM – 05:00 PM (Sat & Sun)",
+      "duration": "2 Weekends (4 Days + Exam)",
+      "seatsTotal": 10,
+      "seatsLeft": 4,
+      "status": "Open",
+      "badgeColor": "#f5b400"
+    },
+    {
+      "id": "batch-agri-special",
+      "name": "Medium Agri-Drone Special",
+      "type": "weekday",
+      "startDate": "Monday, Sep 22, 2026",
+      "endDate": "Friday, Sep 26, 2026",
+      "timing": "08:30 AM – 05:00 PM (Daily)",
+      "duration": "5 Days Specialized",
+      "seatsTotal": 10,
+      "seatsLeft": 2,
+      "status": "Filling Fast",
+      "badgeColor": "#d71920"
+    },
+    {
+      "id": "batch-corporate",
+      "name": "Custom Corporate / Institutional",
+      "type": "custom",
+      "startDate": "Flexible On-Demand",
+      "endDate": "Tailored Schedule",
+      "timing": "Customizable Timings",
+      "duration": "Custom Duration",
+      "seatsTotal": 25,
+      "seatsLeft": 15,
+      "status": "Open",
+      "badgeColor": "#0b1f4d"
+    }
+  ],
+  "news": [
+    {
+      "id": "news-1",
+      "title": "100% Pass Rate in DGCA August Batch",
+      "date": "Aug 28, 2026",
+      "category": "Exam Milestone",
+      "isLive": true,
+      "summary": "All 24 student candidates successfully cleared their practical skill test and theoretical DGCA exam on their first attempt.",
+      "linkText": "View Hall of Fame"
+    },
+    {
+      "id": "news-2",
+      "title": "New Agri-Drone Spraying Specialization Wing Launched",
+      "date": "Aug 20, 2026",
+      "category": "Curriculum",
+      "isLive": false,
+      "summary": "State-of-the-art 25L automated hexacopters added for precision farming training at Kinathukadavu campus.",
+      "linkText": "Learn More"
+    },
+    {
+      "id": "news-3",
+      "title": "Government Subsidy Support for Agriculture Drone Pilots",
+      "date": "Aug 14, 2026",
+      "category": "DGCA & Subsidies",
+      "isLive": false,
+      "summary": "Special financial assistance schemes explained for rural youth and agricultural entrepreneurs enrolling in Medium RPC.",
+      "linkText": "Read Guidelines"
+    }
+  ],
+  "enquiries": [
+    {
+      "id": "enq-45612",
+      "fullName": "KANISHK R",
+      "email": "PILO@GMAIL.COM",
+      "phone": "8248942062",
+      "courseId": "glider-design",
+      "courseName": "Glider Design Training (3–5 Days)",
+      "preferredBatch": "Theory + Hands-on Workshop",
+      "message": "Training Program: Glider Design Training. Mode: Theory + Hands-on Workshop. College/Org: SEDT. Details: Standard enquiry via Training tab.",
+      "createdAt": "3 Sept 2026, 10:10 am",
+      "status": "New",
+      "notes": "Submitted via official website portal"
+    },
+    {
+      "id": "enq-45613",
+      "fullName": "Arun Prasath M",
+      "email": "arun.aero@sece.ac.in",
+      "phone": "+91 94872 61123",
+      "courseId": "drone-internships",
+      "courseName": "Drone Technology Internships (2 Weeks)",
+      "preferredBatch": "On-site / Project Based · Immediate Upcoming Cohort",
+      "message": "[TRAINING REGISTRATION]\nTrack: Drone Technology Internships\nDuration: 2 Weeks\nMode: On-site / Project Based\nCollege/Org: Sri Eshwar College of Engineering\nBackground: B.E / B.Tech Student (Aeronautical Final Year)\nPreferred Batch: Immediate Upcoming Cohort\nCandidate Message: Highly interested in the 2-week R&D project on autonomous agricultural swarm drones and payload integration.",
+      "createdAt": "3 Sept 2026, 10:25 am",
+      "status": "New",
+      "notes": "Fast-track academic internship candidate"
+    },
+    {
+      "id": "enq-45614",
+      "fullName": "Sanjay Vignesh",
+      "email": "sanjay.uav@gmail.com",
+      "phone": "+91 96291 88450",
+      "courseId": "drone-design",
+      "courseName": "Drone Design & Development (5–7 Days)",
+      "preferredBatch": "Theory + Practical · Next Week Cohort",
+      "message": "[TRAINING REGISTRATION]\nTrack: Drone Design & Development\nDuration: 5–7 Days\nMode: Theory + Practical\nCollege/Org: PSG College of Technology\nBackground: Graduate / Professional\nPreferred Batch: Next Week Cohort\nCandidate Message: Interested in carbon-fiber frame sizing, motor/ESC calculation, and flight controller PID tuning for heavy multirotors.",
+      "createdAt": "3 Sept 2026, 10:40 am",
+      "status": "Contacted",
+      "notes": "Spoke on call; sent curriculum syllabus"
+    },
+    {
+      "id": "enq-45615",
+      "fullName": "Meera Krishnan",
+      "email": "meera.k@skct.edu.in",
+      "phone": "+91 98940 77129",
+      "courseId": "drone-repair",
+      "courseName": "Drone Repair & Maintenance (3–5 Days)",
+      "preferredBatch": "Hands-on Workshop · Immediate Upcoming Batch",
+      "message": "[TRAINING REGISTRATION]\nTrack: Drone Repair & Maintenance\nDuration: 3–5 Days\nMode: Hands-on Workshop\nCollege/Org: Sri Krishna College of Technology\nBackground: Diploma / Polytechnic Student\nPreferred Batch: Immediate Upcoming Batch\nCandidate Message: Looking for practical avionics troubleshooting, motor rewiring, ESC diagnosis and post-crash airworthiness restoration.",
+      "createdAt": "3 Sept 2026, 11:05 am",
+      "status": "New",
+      "notes": "Requested weekend workshop option"
+    },
+    {
+      "id": "enq-101",
+      "fullName": "Praveen Kumar S",
+      "email": "praveen.k@gmail.com",
+      "phone": "+91 98421 55678",
+      "courseId": "small-rpc",
+      "courseName": "Small Category RPC (2–25 kg)",
+      "preferredBatch": "Weekday Fast-Track (Sep 8)",
+      "message": "I want to obtain the commercial pilot license for real estate and aerial survey projects.",
+      "createdAt": "2026-08-31 10:24 AM",
+      "status": "New",
+      "notes": "Interested in accommodation nearby campus."
+    },
+    {
+      "id": "enq-102",
+      "fullName": "Ananya Ramesh",
+      "email": "ananya.ramesh@outlook.com",
+      "phone": "+91 94432 10987",
+      "courseId": "combo-package",
+      "courseName": "Small + Medium Category Combo",
+      "preferredBatch": "Weekend Executive (Sep 13)",
+      "message": "Looking for dual certification for agricultural spraying startup in Pollachi.",
+      "createdAt": "2026-08-30 04:15 PM",
+      "status": "Contacted",
+      "notes": "Sent brochure via WhatsApp. Callback scheduled."
+    },
+    {
+      "id": "enq-103",
+      "fullName": "S. Manikandan",
+      "email": "mani.agritech@yahoo.com",
+      "phone": "+91 97890 33421",
+      "courseId": "medium-rpc",
+      "courseName": "Medium Category RPC (25–150 kg)",
+      "preferredBatch": "Medium Agri-Drone Special (Sep 22)",
+      "message": "Already operating small drones, need medium certification for 25L agricultural hexacopter.",
+      "createdAt": "2026-08-29 02:40 PM",
+      "status": "Enrolled",
+      "notes": "Payment confirmed. Batch 3 slot allotted."
+    },
+    {
+      "id": "solar-req-201",
+      "fullName": "K. Vignesh (SunPower Solar EPC Ltd)",
+      "email": "vignesh@sunpowerepc.com",
+      "phone": "+91 98432 77120",
+      "courseId": "solar-inspection",
+      "courseName": "Solar PV Plant Drone Inspection & Aerial Thermography",
+      "preferredBatch": "25 MW Utility Solar Park · Kinathukadavu",
+      "message": "Plant: 25 MW Ground-Mounted Solar Park | Location: Kinathukadavu, Coimbatore | Scope: IEC 62446-3 Radiometric Thermal IR, Hotspot Mapping, 3D Orthomosaic | Desired Date: Next Tuesday",
+      "createdAt": "2026-09-02 11:15 AM",
+      "status": "New",
+      "notes": "Site visit coordination requested for next Tuesday. Thermography calibration required."
+    }
+  ],
+  "lastUpdated": "2026-10-06T04:45:00.512Z"
+}

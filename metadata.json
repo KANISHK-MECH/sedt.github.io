@@ -1,0 +1,6 @@
+{
+  "name": "Sri Eshwar Drone Tech - DGCA RPTO",
+  "description": "DGCA-Authorized Remote Pilot Training Organization (RPTO) in Kinathukadavu, Coimbatore. Commercial Drone Pilot Certification & Industrial Inspection Training.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
