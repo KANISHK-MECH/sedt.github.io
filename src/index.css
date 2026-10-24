@@ -6,6 +6,35 @@
   }
 }
 
+@keyframes tickerMarquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.mobile-ticker-track {
+  display: flex;
+  width: max-content;
+  animation: tickerMarquee 26s linear infinite;
+}
+
+.mobile-ticker-track:hover {
+  animation-play-state: paused;
+}
+
+.mobile-ticker-track-slow {
+  display: flex;
+  width: max-content;
+  animation: tickerMarquee 34s linear infinite;
+}
+
+.mobile-ticker-track-slow:hover {
+  animation-play-state: paused;
+}
+
 /* Custom slick scrollbar for desktop pane viewports */
 ::-webkit-scrollbar {
   width: 6px;

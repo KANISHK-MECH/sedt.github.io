@@ -189,7 +189,7 @@ export const AboutTab: React.FC = () => {
               </div>
               <h4 className="text-xs 2xl:text-sm font-black text-[#08245F]">Exam Pass Guarantee</h4>
               <p className="text-[11px] 2xl:text-xs text-slate-600 leading-snug">
-                Over 1,250 pilots trained with high first-attempt pass records on official DGCA skill evaluations.
+                High first-attempt pass records on official DGCA skill evaluations with comprehensive exam preparation.
               </p>
             </div>
 
@@ -208,76 +208,55 @@ export const AboutTab: React.FC = () => {
           </div>
         </div>
 
-        {/* 2. INSTRUCTOR PROFILES SECTION */}
-        <div className="bg-white border border-[#CFEAFF] rounded-2xl p-4.5 2xl:p-5 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
+        {/* 2. INSTRUCTOR PROFILES SECTION (Simple Name and Designation) */}
+        <div className="bg-white border border-[#CFEAFF] rounded-2xl p-4 sm:p-5 shadow-sm space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
             <div className="flex items-center space-x-2">
               <Users className="w-4 h-4 text-[#08245F]" />
-              <h3 className="text-xs 2xl:text-sm font-black text-[#08245F] uppercase tracking-wide">
-                Certified DGCA Flight & Ground Instructors
+              <h3 className="text-xs sm:text-sm font-black text-[#08245F] uppercase tracking-wide">
+                Key Personnel & Instructors
               </h3>
             </div>
-            <span className="text-[10px] 2xl:text-xs text-slate-500 font-semibold">
-              All CFI & Ground Examiners hold active DGCA badges
+            <span className="text-[10px] sm:text-xs text-slate-500 font-semibold">
+              DGCA Certified Faculty
             </span>
           </div>
 
-          {/* 4 Instructor Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 2xl:gap-4">
+          {/* Simple Name and Designation Cards (No Photos) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {INSTRUCTORS.map((instructor) => (
               <div
                 key={instructor.id}
-                className="bg-white border border-[#CFEAFF] rounded-xl p-3 2xl:p-3.5 flex flex-col justify-between hover:border-[#8CCCF5] hover:shadow-sm transition-all group"
+                className="bg-[#F8FBFE] border border-[#CFEAFF] rounded-xl p-3.5 flex flex-col justify-between hover:border-[#087FE5] hover:bg-white hover:shadow-xs transition-all"
               >
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-3">
-                    <img
-                      src={instructor.image}
-                      alt={instructor.name}
-                      loading="lazy"
-                      decoding="async"
-                      className="w-12 h-12 2xl:w-14 2xl:h-14 rounded-xl object-cover object-top border border-slate-300 shadow-2xs shrink-0 group-hover:scale-105 transition-transform"
-                      style={{ objectPosition: instructor.imagePosition || 'top' }}
-                      referrerPolicy="no-referrer"
-                      onError={(e) => {
-                        const target = e.currentTarget as HTMLImageElement;
-                        target.onerror = null;
-                        target.src = '/images/Mr.M.Mahaboob.webp';
-                      }}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <h4 className="text-xs 2xl:text-sm font-black text-[#08245F] leading-tight whitespace-pre-line break-words">
-                        {instructor.name}
-                      </h4>
-                      <p className="text-[10px] 2xl:text-xs font-bold text-[#d71920] truncate">
-                        {instructor.role}
-                      </p>
-                      <span className="text-[9px] 2xl:text-[10px] font-semibold text-slate-500 block truncate">
-                        {instructor.dgcaNumber}
-                      </span>
-                    </div>
-                  </div>
-
-                  <p className="text-[10px] 2xl:text-xs text-slate-600 leading-snug line-clamp-3">
-                    {instructor.bio}
+                <div>
+                  <h4 className="text-sm font-black text-[#08245F] tracking-tight">
+                    {instructor.name}
+                  </h4>
+                  <p className="text-xs font-bold text-[#d71920] mt-1">
+                    {instructor.role}
+                  </p>
+                  <p className="text-[11px] text-slate-500 mt-1 font-medium">
+                    {instructor.specialization}
                   </p>
                 </div>
-
-                <div className="pt-2 mt-2 border-t border-slate-200">
-                  <span className="text-[9px] 2xl:text-[10px] font-bold text-[#08245F] bg-[#F4FAFF] border border-[#CFEAFF] px-2 py-0.5 rounded block truncate text-center">
-                    🎯 {instructor.specialization}
-                  </span>
-                </div>
+                {instructor.phone && (
+                  <div className="pt-2 mt-2 border-t border-slate-200/70 text-[11px] text-slate-600">
+                    <a href={`tel:${instructor.phone.replace(/\s+/g, '')}`} className="font-semibold text-[#08245F] hover:text-[#087FE5]">
+                      {instructor.phone}
+                    </a>
+                  </div>
+                )}
               </div>
             ))}
           </div>
 
           {/* Directorate Contact Notice */}
-          <div className="mt-4 p-3 rounded-xl bg-[#F4FAFF] border border-[#CFEAFF] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          <div className="p-3 rounded-xl bg-[#F4FAFF] border border-[#CFEAFF] flex flex-col sm:flex-row items-center justify-between gap-2.5 text-xs">
             <div className="flex items-center space-x-2">
               <UserCheck className="w-4 h-4 text-[#FFB800] shrink-0" />
               <span className="text-slate-700 font-medium">
-                For administrative, batch booking & DGCA regulatory enquiries:
+                For batch booking, training schedules & DGCA regulatory queries:
               </span>
             </div>
             <div className="flex items-center space-x-3 text-[11px] font-bold">

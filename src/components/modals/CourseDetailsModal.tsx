@@ -57,20 +57,22 @@ export const CourseDetailsModal: React.FC = () => {
         <div className="p-5 overflow-y-auto space-y-4 text-slate-700">
           {/* Top Banner with Image and Specs */}
           <div className="flex flex-col sm:flex-row gap-3.5 bg-[#F4FAFF] border border-[#CFEAFF] rounded-xl p-3">
-            <img
-              src={course.image}
-              alt={course.name}
-              loading="lazy"
-              decoding="async"
-              className="w-full sm:w-44 h-28 rounded-lg object-fill border border-slate-200"
-              style={{ objectFit: 'fill' }}
-              referrerPolicy="no-referrer"
-              onError={(e) => {
-                const target = e.currentTarget as HTMLImageElement;
-                target.onerror = null;
-                target.src = '/images/airfield.webp';
-              }}
-            />
+            <div className="w-full sm:w-52 aspect-video rounded-lg overflow-hidden border border-slate-200 shrink-0 bg-slate-900" style={{ aspectRatio: '16 / 9' }}>
+              <img
+                src={course.image}
+                alt={course.name}
+                loading="lazy"
+                decoding="async"
+                className="w-full h-full object-cover"
+                style={{ aspectRatio: '16 / 9' }}
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  const target = e.currentTarget as HTMLImageElement;
+                  target.onerror = null;
+                  target.src = '/images/airfield.webp';
+                }}
+              />
+            </div>
             <div className="flex-1 flex flex-col justify-between">
               <div>
                 <span className="text-[10px] font-extrabold text-[#d71920] uppercase">

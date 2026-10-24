@@ -12,6 +12,7 @@ import {
   Sun,
   Flame,
   Building2,
+  Images,
   Phone,
   Info,
   Menu,
@@ -25,6 +26,7 @@ import { CoursesTab } from './components/tabs/CoursesTab';
 import { TrainingTab } from './components/tabs/TrainingTab';
 import { SolarWindInspectionTab } from './components/tabs/SolarWindInspectionTab';
 import { InfrastructureTab } from './components/tabs/InfrastructureTab';
+import { RpcHoldersTab } from './components/tabs/RpcHoldersTab';
 import { ContactTab } from './components/tabs/ContactTab';
 
 // Modals
@@ -32,6 +34,7 @@ import { EnrollModal } from './components/modals/EnrollModal';
 import { CourseDetailsModal } from './components/modals/CourseDetailsModal';
 import { BrochureModal } from './components/modals/BrochureModal';
 import { SolarBookingModal } from './components/modals/SolarBookingModal';
+import { WindBookingModal } from './components/modals/WindBookingModal';
 import { CampusTourModal } from './components/modals/CampusTourModal';
 import { GalleryLightbox } from './components/modals/GalleryLightbox';
 import { AdminWebsite } from './components/admin/AdminWebsite';
@@ -41,6 +44,7 @@ const MOBILE_NAV_ITEMS: { id: TabType; label: string; icon: React.ElementType }[
   { id: 'courses', label: 'Courses', icon: BookOpen },
   { id: 'training', label: 'Training', icon: Layers },
   { id: 'inspections', label: 'Solar & Wind', icon: Sun },
+  { id: 'infrastructure', label: 'Gallery', icon: Images },
   { id: 'contact', label: 'Contact', icon: Phone }
 ];
 
@@ -57,6 +61,8 @@ const MainLayout: React.FC = () => {
         return <CoursesTab />;
       case 'training':
         return <TrainingTab />;
+      case 'rpc-holders':
+        return <RpcHoldersTab />;
       case 'inspections':
         return <SolarWindInspectionTab />;
       case 'solar':
@@ -64,6 +70,7 @@ const MainLayout: React.FC = () => {
       case 'wind':
         return <SolarWindInspectionTab initialSection="wind" />;
       case 'infrastructure':
+      case 'gallery':
         return <InfrastructureTab />;
       case 'contact':
         return <ContactTab />;
@@ -134,25 +141,23 @@ const MainLayout: React.FC = () => {
         <RightSidebar />
       </div>
 
-      {/* 3. MOBILE & TABLET BOTTOM QUICK NAVIGATION BAR (Visible below lg breakpoint) */}
-      <div className="lg:hidden h-14 bg-white/95 backdrop-blur-md border-t border-[#CFEAFF] flex items-center justify-around px-1 sm:px-3 shrink-0 z-20 shadow-lg">
+      {/* 3. MOBILE BOTTOM QUICK NAVIGATION BAR (Visible below sm breakpoint) */}
+      <div className="sm:hidden h-14 bg-white/95 backdrop-blur-md border-t border-[#CFEAFF] flex items-center justify-around px-1 shrink-0 z-20 shadow-lg">
         {MOBILE_NAV_ITEMS.map((item) => {
           const Icon = item.icon;
-          const isActive =
-            activeTab === item.id ||
-            (item.id === 'inspections' && (activeTab === 'solar' || activeTab === 'wind'));
+          const isActive = activeTab === item.id;
           return (
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`flex flex-col items-center justify-center flex-1 py-1 transition-all cursor-pointer ${
-                isActive ? 'text-[#087FE5] font-black scale-105' : 'text-[#08245F]/75 font-medium hover:text-[#08245F]'
+              className={`flex flex-col items-center justify-center flex-1 py-1 transition-all min-w-0 ${
+                isActive ? 'text-[#087FE5] font-black scale-105' : 'text-[#08245F]/70 font-medium'
               }`}
             >
-              <div className={`p-1 rounded-lg ${isActive ? 'bg-[#087FE5]/15 text-[#087FE5]' : 'text-slate-500'}`}>
+              <div className={`p-1 rounded-lg ${isActive ? 'bg-[#087FE5]/15 text-[#087FE5]' : 'text-slate-400'}`}>
                 <Icon className="w-4 h-4" />
               </div>
-              <span className="text-[10px] leading-tight tracking-tight mt-0.5">{item.label}</span>
+              <span className="text-[9px] min-[360px]:text-[9.5px] leading-tight tracking-tight mt-0.5 truncate max-w-full px-0.5 text-center">{item.label}</span>
             </button>
           );
         })}
@@ -163,6 +168,7 @@ const MainLayout: React.FC = () => {
       <CourseDetailsModal />
       <BrochureModal />
       <SolarBookingModal />
+      <WindBookingModal />
       <CampusTourModal />
       <GalleryLightbox />
       <ToastContainer />
@@ -209,7 +215,7 @@ export default function App() {
   return (
     <AppProvider>
       {isAdminRoute ? (
-        <div className="h-screen w-full overflow-hidden flex flex-col">
+        <div className="h-screen h-[100dvh] min-h-[100dvh] w-full overflow-hidden flex flex-col">
           <AdminWebsite />
           <ToastContainer />
         </div>

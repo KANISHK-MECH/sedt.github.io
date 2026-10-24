@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { WIND_INSPECTIONS } from '../../data/mockData';
+import solarMappingAuditImg from '../../assets/images/regenerated_image_1791799694667.webp';
 
 interface SolarWindInspectionTabProps {
   initialSection?: 'solar' | 'wind';
@@ -23,11 +24,25 @@ interface SolarWindInspectionTabProps {
 export const SolarWindInspectionTab: React.FC<SolarWindInspectionTabProps> = ({
   initialSection
 }) => {
-  const { openSolarBookingModal, openEnrollModal, openLightbox } = useApp();
+  const { openSolarBookingModal, openWindBookingModal, openEnrollModal, openLightbox } = useApp();
   const [activeFilter, setActiveFilter] = useState<'all' | 'solar' | 'wind'>('all');
   const solarRef = useRef<HTMLDivElement>(null);
   const windRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Preload inspection images immediately on mount
+  useEffect(() => {
+    [solarMappingAuditImg].forEach((src) => {
+      const img = new Image();
+      img.src = src;
+    });
+    WIND_INSPECTIONS.forEach((card) => {
+      if (card.image) {
+        const img = new Image();
+        img.src = card.image;
+      }
+    });
+  }, []);
 
   // Auto-scroll to requested section if initialSection is provided
   useEffect(() => {
@@ -83,7 +98,7 @@ export const SolarWindInspectionTab: React.FC<SolarWindInspectionTabProps> = ({
         'Receive a consolidated audit report with fault locations, annotated images, site maps, and a 3D digital twin model for warranty claims and maintenance.',
       output: 'Geospatial fault report + GIS layers + 3D site model',
       standard: 'Consolidated Geospatial Audit',
-      image: 'https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&w=800&q=80'
+      image: solarMappingAuditImg
     }
   ];
 
@@ -155,17 +170,25 @@ export const SolarWindInspectionTab: React.FC<SolarWindInspectionTabProps> = ({
 
                 <button
                   onClick={() => openSolarBookingModal()}
-                  className="cursor-pointer inline-flex items-center space-x-1.5 px-4 py-1.5 rounded-full text-xs font-black text-[#08245F] bg-[#FFB800] hover:bg-[#E5A600] active:scale-98 transition-all shadow-md uppercase tracking-wider ml-auto lg:ml-0"
+                  className="cursor-pointer inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-[#08245F] bg-[#FFB800] hover:bg-[#E5A600] active:scale-98 transition-all shadow-xs uppercase tracking-wider"
                 >
-                  <Calendar className="w-3.5 h-3.5 text-[#08245F]" />
-                  <span>Book Inspection</span>
+                  <Sun className="w-3.5 h-3.5 text-[#08245F]" />
+                  <span>Book Solar</span>
+                </button>
+
+                <button
+                  onClick={() => openWindBookingModal()}
+                  className="cursor-pointer inline-flex items-center space-x-1.5 px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-black text-white bg-sky-500 hover:bg-sky-400 active:scale-98 transition-all shadow-md uppercase tracking-wider border border-white/20 ml-auto lg:ml-0"
+                >
+                  <Wind className="w-3.5 h-3.5 text-[#FFB800]" />
+                  <span>Book Wind</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
 
             {/* Quick Metrics Badge Column */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-2 sm:gap-2.5 shrink-0 w-full lg:w-auto lg:min-w-[220px]">
+            <div className="grid grid-cols-3 lg:grid-cols-1 gap-2 sm:gap-2.5 shrink-0 min-w-[200px] lg:min-w-[220px]">
               <div className="bg-white/10 backdrop-blur-xs border border-white/15 rounded-xl p-2.5 2xl:p-3 flex items-center space-x-3">
                 <div className="p-2 rounded-lg bg-[#FFB800]/20 text-[#FFB800] shrink-0">
                   <Sun className="w-4 h-4" />
@@ -231,7 +254,7 @@ export const SolarWindInspectionTab: React.FC<SolarWindInspectionTabProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center space-x-2 shrink-0 self-start sm:self-auto">
+            <div className="flex items-center space-x-2 shrink-0">
               <button
                 onClick={() => openSolarBookingModal()}
                 className="cursor-pointer inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#08245F] bg-[#FFB800] hover:bg-[#E5A600] active:scale-98 transition-all shadow-xs"
@@ -242,8 +265,8 @@ export const SolarWindInspectionTab: React.FC<SolarWindInspectionTabProps> = ({
             </div>
           </div>
 
-          {/* Workflow Steps Grid (Responsive 1 -> 2 -> 3 Columns) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 2xl:gap-5">
+          {/* Workflow Steps Grid (3 Cards) */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 2xl:gap-5">
             {SOLAR_WORKFLOW_STEPS.map((card) => {
               const displayImage = card.image;
 
@@ -259,8 +282,7 @@ export const SolarWindInspectionTab: React.FC<SolarWindInspectionTabProps> = ({
                         id={`solar-card-img-${card.id}`}
                         src={displayImage}
                         alt={card.headline}
-                        loading="lazy"
-                        decoding="async"
+                        loading="eager"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         referrerPolicy="no-referrer"
                         onError={(e) => {
@@ -269,6 +291,8 @@ export const SolarWindInspectionTab: React.FC<SolarWindInspectionTabProps> = ({
                             target.src = '/images/thermal-image-1.webp';
                           } else if (card.id === 'solar-step-2' && !target.src.includes('rgb-solar-panel.webp')) {
                             target.src = '/images/rgb-solar-panel.webp';
+                          } else if (card.id === 'solar-step-3' && !target.src.includes('/images/solar-mapping-audit.webp')) {
+                            target.src = '/images/solar-mapping-audit.webp';
                           }
                         }}
                       />
@@ -397,25 +421,38 @@ export const SolarWindInspectionTab: React.FC<SolarWindInspectionTabProps> = ({
               </p>
             </div>
 
-            {/* Quick Stats Grid */}
-            <div className="grid grid-cols-3 gap-2 2xl:gap-3 shrink-0 w-full md:w-auto">
-              <div className="bg-white/10 border border-white/15 rounded-xl p-2 sm:p-2.5 2xl:p-3.5 text-center">
-                <span className="text-sm sm:text-base 2xl:text-xl font-black text-[#FFB800]">45 Mins</span>
-                <p className="text-[8.5px] sm:text-[9px] 2xl:text-[10px] text-slate-300 uppercase font-semibold">Per Turbine</p>
+            {/* Quick Stats Grid & Booking CTA */}
+            <div className="flex flex-col sm:flex-row md:flex-col lg:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 shrink-0">
+              <div className="grid grid-cols-3 gap-2 2xl:gap-3 shrink-0">
+                <div className="bg-white/10 border border-white/15 rounded-xl p-2.5 2xl:p-3.5 text-center">
+                  <span className="text-base 2xl:text-xl font-black text-[#FFB800]">45 Mins</span>
+                  <p className="text-[9px] 2xl:text-[10px] text-slate-300 uppercase font-semibold">Per Turbine</p>
+                </div>
+                <div className="bg-white/10 border border-white/15 rounded-xl p-2.5 2xl:p-3.5 text-center">
+                  <span className="text-base 2xl:text-xl font-black text-emerald-400">0.1 mm</span>
+                  <p className="text-[9px] 2xl:text-[10px] text-slate-300 uppercase font-semibold">Crack Precision</p>
+                </div>
+                <div className="bg-white/10 border border-white/15 rounded-xl p-2.5 2xl:p-3.5 text-center">
+                  <span className="text-base 2xl:text-xl font-black text-white">100% Zero</span>
+                  <p className="text-[9px] 2xl:text-[10px] text-slate-300 uppercase font-semibold">Climber Risk</p>
+                </div>
               </div>
-              <div className="bg-white/10 border border-white/15 rounded-xl p-2 sm:p-2.5 2xl:p-3.5 text-center">
-                <span className="text-sm sm:text-base 2xl:text-xl font-black text-emerald-400">0.1 mm</span>
-                <p className="text-[8.5px] sm:text-[9px] 2xl:text-[10px] text-slate-300 uppercase font-semibold">Crack Precision</p>
-              </div>
-              <div className="bg-white/10 border border-white/15 rounded-xl p-2 sm:p-2.5 2xl:p-3.5 text-center">
-                <span className="text-sm sm:text-base 2xl:text-xl font-black text-white">100% Zero</span>
-                <p className="text-[8.5px] sm:text-[9px] 2xl:text-[10px] text-slate-300 uppercase font-semibold">Climber Risk</p>
-              </div>
+
+              <button
+                type="button"
+                id="book-wind-inspection-btn"
+                onClick={openWindBookingModal}
+                className="cursor-pointer inline-flex items-center justify-center space-x-2 px-4 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-black text-[#08245F] bg-[#FFB800] hover:bg-[#E5A600] active:scale-98 transition-all shadow-md uppercase tracking-wider whitespace-nowrap self-stretch sm:self-auto"
+              >
+                <Calendar className="w-4 h-4 text-[#08245F]" />
+                <span>Book Wind Inspection</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
 
-          {/* Three Wind Inspection Cards (Responsive 1 -> 2 -> 3 Columns) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 2xl:gap-5">
+          {/* Three Wind Inspection Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 2xl:gap-5">
             {WIND_INSPECTIONS.map((card) => (
               <div
                 key={card.id}
@@ -427,8 +464,7 @@ export const SolarWindInspectionTab: React.FC<SolarWindInspectionTabProps> = ({
                     <img
                       src={card.image}
                       alt={card.title}
-                      loading="lazy"
-                      decoding="async"
+                      loading="eager"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       referrerPolicy="no-referrer"
                       onError={(e) => {
@@ -483,13 +519,22 @@ export const SolarWindInspectionTab: React.FC<SolarWindInspectionTabProps> = ({
                   </div>
                 </div>
 
-                {/* Action Button */}
-                <button
-                  onClick={() => openEnrollModal('combo-package')}
-                  className="cursor-pointer w-full mt-3 py-2 px-3 rounded-xl text-[11px] 2xl:text-xs font-bold text-[#08245F] bg-[#FFB800] hover:bg-[#E5A600] active:scale-98 transition-colors text-center shadow-xs"
-                >
-                  Master Wind Turbine Drone Ops
-                </button>
+                {/* Action Buttons: Book Inspection & Training */}
+                <div className="grid grid-cols-2 gap-2 mt-3">
+                  <button
+                    onClick={openWindBookingModal}
+                    className="cursor-pointer py-2 px-2 rounded-xl text-[11px] 2xl:text-xs font-black text-[#08245F] bg-[#FFB800] hover:bg-[#E5A600] active:scale-98 transition-colors text-center shadow-xs flex items-center justify-center gap-1"
+                  >
+                    <Calendar className="w-3 h-3 text-[#08245F]" />
+                    <span>Book Survey</span>
+                  </button>
+                  <button
+                    onClick={() => openEnrollModal('combo-package')}
+                    className="cursor-pointer py-2 px-2 rounded-xl text-[11px] 2xl:text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 active:scale-98 transition-colors text-center border border-slate-200"
+                  >
+                    <span>Pilot Training</span>
+                  </button>
+                </div>
               </div>
             ))}
           </div>

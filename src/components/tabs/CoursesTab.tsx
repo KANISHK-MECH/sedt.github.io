@@ -70,15 +70,15 @@ export const CoursesTab: React.FC = () => {
                 className="bg-white border border-[#CFEAFF] rounded-2xl p-3.5 2xl:p-4 shadow-sm hover:shadow-md hover:border-[#8CCCF5] transition-all flex flex-col justify-between relative group"
               >
                 <div className="space-y-2.5">
-                  {/* Course Image Banner */}
-                  <div className="relative h-28 sm:h-32 2xl:h-36 w-full rounded-xl overflow-hidden bg-slate-900 border border-slate-200">
+                  {/* Course Image Banner - Locked 16:9 aspect ratio on mobile, tablet, and pc */}
+                  <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-slate-900 border border-slate-200" style={{ aspectRatio: '16 / 9' }}>
                     <img
                       src={course.image}
                       alt={course.name}
                       loading="lazy"
                       decoding="async"
-                      className="w-full h-full object-fill group-hover:scale-105 transition-transform duration-300"
-                      style={{ objectFit: 'fill' }}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      style={{ aspectRatio: '16 / 9' }}
                       referrerPolicy="no-referrer"
                       onError={(e) => {
                         const target = e.currentTarget as HTMLImageElement;
@@ -157,20 +157,27 @@ export const CoursesTab: React.FC = () => {
               </div>
 
               <div className="space-y-3 relative z-0">
-                <span className="text-[10px] 2xl:text-xs font-bold uppercase tracking-widest text-[#FFB800]">
+                <span
+                  className="font-bold uppercase tracking-widest text-[#FFB800]"
+                  style={{
+                    fontSize: '14px',
+                    fontStyle: 'normal',
+                    lineHeight: '19px'
+                  }}
+                >
                   Dual DGCA Pilot License
                 </span>
 
-                {/* Course Image */}
-                <div className="relative h-36 2xl:h-44 w-full rounded-xl overflow-hidden border border-white/20">
+                {/* Course Image - Locked 16:9 aspect ratio on mobile, tablet, and pc */}
+                <div className="relative aspect-video w-full rounded-xl overflow-hidden border border-white/20 bg-slate-900" style={{ aspectRatio: '16 / 9' }}>
                   <img
                     id="combo-course-image"
                     src={comboCourse.image || '/images/small-medium-class.webp'}
                     alt={comboCourse.name}
                     loading="lazy"
                     decoding="async"
-                    className="w-full h-full object-fill object-center"
-                    style={{ objectFit: 'fill' }}
+                    className="w-full h-full object-cover object-center"
+                    style={{ aspectRatio: '16 / 9' }}
                     referrerPolicy="no-referrer"
                     onError={(e) => {
                       const target = e.currentTarget as HTMLImageElement;
@@ -210,10 +217,6 @@ export const CoursesTab: React.FC = () => {
                   <div className="flex items-center space-x-1.5 text-slate-200">
                     <Check className="w-3.5 h-3.5 text-[#FFB800] shrink-0" />
                     <span>Agri Spraying & Heavy Hexacopter Training</span>
-                  </div>
-                  <div className="flex items-center space-x-1.5 text-slate-200">
-                    <Check className="w-3.5 h-3.5 text-[#FFB800] shrink-0" />
-                    <span>Free Solar/Wind Industrial Module</span>
                   </div>
                 </div>
 

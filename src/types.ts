@@ -7,7 +7,21 @@ export type TabType =
   | 'solar'
   | 'wind'
   | 'infrastructure'
+  | 'gallery'
+  | 'rpc-holders'
   | 'contact';
+
+export interface RpcHolder {
+  id: string;
+  serialNo: string;
+  certificateNo: string;
+  rpcNo: string;
+  name: string;
+  issueYear?: string;
+  category?: string;
+  status?: 'Active' | 'Verified' | 'Issued';
+}
+
 
 export interface Course {
   id: string;
@@ -82,15 +96,21 @@ export interface Instructor {
   phone?: string;
 }
 
-export interface Facility {
+export type GalleryCategory = 'Training' | 'Events' | 'Industrial' | 'Facilities' | string;
+
+export interface GalleryItem {
   id: string;
-  name: string;
-  subtitle: string;
-  description: string;
-  image: string;
-  stats: string;
-  highlights: string[];
+  name: string; // Photo Title
+  subtitle: string; // Photo Subtitle
+  description: string; // Photo Description
+  image: string; // Image URL or Base64 Data URL
+  category?: string; // Filter Category: 'Training' | 'Events' | 'Industrial' | 'Facilities'
+  stats?: string; // Tag or category badge
+  highlights?: string[];
+  createdAt?: string;
 }
+
+export type Facility = GalleryItem;
 
 export interface InspectionCard {
   id: string;

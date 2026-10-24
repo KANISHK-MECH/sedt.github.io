@@ -4,6 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 import { INTEGRATIONS_CONFIG } from './src/config/integrations';
+import { INITIAL_RPC_HOLDERS } from './src/data/rpcHoldersData';
 
 const app = express();
 const PORT = 3000;
@@ -332,6 +333,170 @@ const INITIAL_ENQUIRIES = [
     createdAt: '2026-09-02 11:15 AM',
     status: 'New',
     notes: 'Site visit coordination requested for next Tuesday. Thermography calibration required.'
+  },
+  {
+    id: 'wind-req-202',
+    fullName: 'M. Senthil Kumar (Muppandal Wind Power Assets)',
+    email: 'senthil.k@muppandalwind.in',
+    phone: '+91 98944 68231',
+    courseId: 'wind-inspection',
+    courseName: 'Wind Turbine Blade & Nacelle Drone UAV Survey',
+    preferredBatch: '15 Turbines (Vestas V110) · Udumalpet Wind Corridor',
+    message: 'Wind Farm: 15 Turbines (Vestas V110, 120m Hub Height) | Location: Udumalpet / Muppandal Pass | Scope: DNV-GL Blade Surface 0.1mm Crack Scan, Leading Edge Erosion, Lightning Receptor Conductivity, Nacelle Thermal IR | Target Schedule: Pre-Monsoon Audit',
+    createdAt: '2026-09-03 09:30 AM',
+    status: 'New',
+    notes: 'Requested autonomous UAV blade inspection before peak southwest monsoon wind season.'
+  }
+];
+
+const INITIAL_GALLERY = [
+  {
+    id: 'fac-1',
+    name: 'DGCA Kinathukadavu Airfield & Drone Fly Area',
+    subtitle: '15+ Acres Approved Green Zone Airspace',
+    description: 'Dedicated private flying field in Kinathukadavu, Coimbatore, with uninterrupted Green Zone airspace, geo-fenced safety boundaries, calibrated helipads, and full weather telemetry instrumentation.',
+    image: '/images/airfield.webp',
+    category: 'Facilities',
+    stats: '15+ Acres • Active Airfield',
+    highlights: [
+      'Dual active paved runways & soft-landing turf',
+      'Live ultrasonic weather station & windsock array',
+      'First-aid & safety shelter with live telemetry monitors',
+      'High-resolution aerial telemetry tracking for flight exams'
+    ]
+  },
+  {
+    id: 'fac-2',
+    name: 'Sri Eshwar Drone Tech RPTO Headquarters',
+    subtitle: 'Signature Multi-Storey Aviation & Flight Center',
+    description: 'Modern multi-storey headquarters facility housing DGCA administration, academic faculty offices, trainee lounge, and direct access to 15+ acres of certified training grounds.',
+    image: '/images/drone-infra-building.webp',
+    category: 'Facilities',
+    stats: 'Multi-Storey • DGCA Center',
+    highlights: [
+      'Integrated DGCA registration & compliance desk',
+      'Air-conditioned faculty & trainee academic wings',
+      'Rooftop anemometer & aviation telemetry mast',
+      'Full security, biometric access & conference facilities'
+    ]
+  },
+  {
+    id: 'fac-3',
+    name: 'High-Fidelity UAV Flight Simulator Zone',
+    subtitle: 'Dual-Seat Digital Flight Simulator Stations',
+    description: 'Advanced computer flight simulator laboratory equipped with RealFlight & custom PX4 cockpits simulating Tamil Nadu topography, high gusts, emergency battery drops, and motor failure recoveries.',
+    image: '/images/simulator-zone.webp',
+    category: 'Training',
+    stats: '12 Simulator Stations • VR Ready',
+    highlights: [
+      'Exact transmitter mapping with dual-trainer link',
+      'Simulated rain, wind shear, and magnetic interference',
+      'GCS mission planning & automatic waypoint creation',
+      'Automated error logs for instructor debriefing'
+    ]
+  },
+  {
+    id: 'fac-4',
+    name: 'Smart Ground Class & Aviation Lecture Hall',
+    subtitle: 'Interactive Aviation Theory Classroom',
+    description: 'Air-conditioned digital classroom with high-resolution projection, interactive 3D aerodynamics demonstrations, Digital Sky portal tutorials, and DGCA question bank mock assessment stations.',
+    image: '/images/ground-class.webp',
+    category: 'Training',
+    stats: '40 Seat Capacity • Smart AV',
+    highlights: [
+      'Interactive 3D airspace map visualizations',
+      'Digital mock exam terminals for instant scoring',
+      'Full Digital Sky portal registration guidance',
+      'Audio-visual case studies of industrial drone flights'
+    ]
+  },
+  {
+    id: 'fac-5',
+    name: 'Drone Station 1 - Assembly & Multirotor Rig',
+    subtitle: 'Hardware Assembly, Propeller Balancing & Test Bench',
+    description: 'Industrial assembly workbench area where trainees gain hands-on experience assembling airframes, balancing carbon fiber propellers, and testing brushless propulsion systems.',
+    image: '/images/drone-station.webp',
+    category: 'Industrial',
+    stats: 'Industrial Lab • Multirotor Rig',
+    highlights: [
+      'Heavy multirotor carbon-fiber chassis assembly jigs',
+      'Propeller dynamic balancing & vibration sensors',
+      'ESC calibration & brushless motor thrust benches',
+      'Hardware toolkits & torque-calibrated drivers'
+    ]
+  },
+  {
+    id: 'fac-6',
+    name: 'Drone Station 2 - Avionics & Diagnostics Workshop',
+    subtitle: 'Electronics, Telemetry & LiPo Battery Safety Bay',
+    description: 'Specialized electronics repair and diagnostics workbench equipped with oscilloscopes, spectrum analyzers, smart multi-channel LiPo balance charging bays, and payload integration rigs.',
+    image: '/images/drone-station-2.webp',
+    category: 'Industrial',
+    stats: 'Avionics Lab • LiPo Bunkers',
+    highlights: [
+      'Digital oscilloscopes & RF spectrum analyzers',
+      'Smart multi-channel LiPo balance charging stations',
+      'RTK GNSS module calibration & compass tuning',
+      'Fail-safe parachute & return-to-home testing rigs'
+    ]
+  },
+  {
+    id: 'fac-7',
+    name: 'Flight Operations & Crew Discussion Room',
+    subtitle: 'Mission Planning & Post-Flight Debriefing Suite',
+    description: 'Dedicated flight crew discussion room designed for pre-flight weather assessments, NOTAM analysis, emergency contingency reviews, and mission route deconfliction.',
+    image: '/images/discussion-room.webp',
+    category: 'Training',
+    stats: 'Briefing Suite • Mission Control',
+    highlights: [
+      'Interactive flight planning digital display screens',
+      'NOTAM, METAR weather & Green Zone airspace charts',
+      'Crew Resource Management (CRM) collaborative seating',
+      'Post-flight telemetry playback & critique stations'
+    ]
+  },
+  {
+    id: 'fac-8',
+    name: 'Drone Library & UAV Research Innovation Hub',
+    subtitle: 'Comprehensive UAV Fleet & Component Archive',
+    description: 'Dedicated technology archive featuring a wide spectrum of multirotors, agricultural sprayers, survey sensors, thermal cameras, and technical manuals for hands-on exploration.',
+    image: '/images/drone-library.webp',
+    category: 'Industrial',
+    stats: 'Research Hub • Fleet Archive',
+    highlights: [
+      'Showcase of diverse commercial UAV models & payloads',
+      'Agricultural spray nozzles & centrifugal atomizers',
+      'Multispectral, LiDAR & radiometric thermal sensors',
+      'Aviation reference library & DGCA manuals'
+    ]
+  },
+  {
+    id: 'event-1',
+    name: 'DGCA Remote Pilot Wings & License Convocation Ceremony',
+    subtitle: 'Official Wings Badge & Digital Sky Certification Distribution',
+    description: 'Graduating remote pilot cohort ceremony awarding official DGCA certification with chief flight instructors, DGCA examiners, and industrial UAV placement partners.',
+    image: '/images/ground-class.webp',
+    category: 'Events',
+    stats: 'Annual Convocation • Batch 24',
+    highlights: [
+      'Official DGCA Wings badge conferment',
+      'Trainee solo flight showcase & certificate handover',
+      'Industry placement recruiter interaction'
+    ]
+  },
+  {
+    id: 'event-2',
+    name: 'Tamil Nadu Drone Tech Expo & Airfield Flight Showcase',
+    subtitle: 'Precision Flight Formations & Real-Time Aerial Survey Demo',
+    description: 'Live field demonstrations featuring automated waypoint mapping, precision agricultural spraying, and high-resolution thermal solar panel inspection over Kinathukadavu airfield.',
+    image: '/images/airfield.webp',
+    category: 'Events',
+    stats: 'Live Expo • Flight Demonstrations',
+    highlights: [
+      'Live telemetry broadcast on ground control station',
+      'Precision thermal sensor payload test runs',
+      'Multi-drone obstacle avoidance maneuvers'
+    ]
   }
 ];
 
@@ -340,6 +505,8 @@ interface DatabaseSchema {
   batches: typeof INITIAL_BATCHES;
   news: typeof INITIAL_NEWS;
   enquiries: typeof INITIAL_ENQUIRIES;
+  gallery: typeof INITIAL_GALLERY;
+  rpcHolders: typeof INITIAL_RPC_HOLDERS;
   settings?: {
     googleSheetsUrl?: string;
     lastSyncTime?: string;
@@ -451,6 +618,51 @@ function readDatabase(): DatabaseSchema {
           return c;
         });
       }
+      if (!parsed.gallery || !Array.isArray(parsed.gallery)) {
+        parsed.gallery = [...INITIAL_GALLERY];
+        changed = true;
+      } else {
+        // Ensure every existing item in database gallery has a valid category without resurrecting deleted items
+        parsed.gallery = parsed.gallery.map((item: any) => {
+          if (!item.category) {
+            changed = true;
+            if (item.id === 'fac-1' || item.id === 'fac-2') return { ...item, category: 'Facilities' };
+            if (item.id === 'fac-3' || item.id === 'fac-4' || item.id === 'fac-7') return { ...item, category: 'Training' };
+            if (item.id === 'fac-5' || item.id === 'fac-6' || item.id === 'fac-8') return { ...item, category: 'Industrial' };
+            const text = `${item.name} ${item.subtitle} ${item.description} ${item.stats || ''}`.toLowerCase();
+            if (text.includes('event') || text.includes('ceremony') || text.includes('expo') || text.includes('graduation')) {
+              return { ...item, category: 'Events' };
+            }
+            if (text.includes('simul') || text.includes('pilot') || text.includes('class') || text.includes('course') || text.includes('briefing')) {
+              return { ...item, category: 'Training' };
+            }
+            if (text.includes('industrial') || text.includes('station') || text.includes('avionics') || text.includes('solar') || text.includes('inspection') || text.includes('lab')) {
+              return { ...item, category: 'Industrial' };
+            }
+            return { ...item, category: 'Facilities' };
+          }
+          return item;
+        });
+      }
+
+      // Ensure wind turbine inspection enquiry seed exists in enquiries list
+      if (parsed.enquiries && Array.isArray(parsed.enquiries)) {
+        const hasWind = parsed.enquiries.some((e: any) => e.courseId === 'wind-inspection');
+        if (!hasWind) {
+          const windEnquiry = INITIAL_ENQUIRIES.find((e) => e.id === 'wind-req-202');
+          if (windEnquiry) {
+            parsed.enquiries.push(windEnquiry);
+            changed = true;
+          }
+        }
+      }
+
+      // Ensure RPC holders list exists and is populated with certified pilots
+      if (!parsed.rpcHolders || !Array.isArray(parsed.rpcHolders)) {
+        parsed.rpcHolders = [...INITIAL_RPC_HOLDERS];
+        changed = true;
+      }
+
       if (changed) {
         writeDatabase(parsed);
       }
@@ -466,6 +678,8 @@ function readDatabase(): DatabaseSchema {
     batches: INITIAL_BATCHES,
     news: INITIAL_NEWS,
     enquiries: INITIAL_ENQUIRIES,
+    gallery: INITIAL_GALLERY,
+    rpcHolders: [...INITIAL_RPC_HOLDERS],
     lastUpdated: new Date().toISOString()
   };
   writeDatabase(defaultDb);
@@ -588,6 +802,158 @@ app.delete('/api/news/:id', (req, res) => {
   db.news = db.news.filter((n) => n.id !== id);
   writeDatabase(db);
   res.json({ success: true });
+});
+
+// GET Gallery Photos
+app.get('/api/gallery', (req, res) => {
+  const db = readDatabase();
+  res.json(db.gallery || INITIAL_GALLERY);
+});
+
+// CREATE Gallery Photo (from Admin Panel)
+app.post('/api/gallery', (req, res) => {
+  const db = readDatabase();
+  if (!db.gallery) db.gallery = [];
+  const { id, name, subtitle, description, image, stats, highlights, category } = req.body;
+
+  if (!name || !image) {
+    return res.status(400).json({ error: 'Photo and title are required' });
+  }
+
+  const newItem = {
+    id: id ? String(id).trim() : `gallery-${Date.now()}`,
+    name: name.trim(),
+    subtitle: subtitle ? subtitle.trim() : 'Campus & Flight Operations',
+    description: description ? description.trim() : '',
+    image: image.trim(),
+    stats: stats ? stats.trim() : 'Photo',
+    highlights: Array.isArray(highlights) ? highlights : [],
+    category: category || 'Training',
+    createdAt: new Date().toISOString()
+  };
+
+  db.gallery.unshift(newItem);
+  writeDatabase(db);
+  res.status(201).json({ success: true, item: newItem, gallery: db.gallery });
+});
+
+// UPDATE Gallery Photo
+app.put('/api/gallery/:id', (req, res) => {
+  const db = readDatabase();
+  const rawId = req.params.id;
+  const decodedId = decodeURIComponent(rawId);
+  const updatedItem = req.body;
+  if (!db.gallery) db.gallery = [];
+  const index = db.gallery.findIndex((g: any) => g.id === rawId || g.id === decodedId);
+
+  if (index !== -1) {
+    db.gallery[index] = { ...db.gallery[index], ...updatedItem };
+    writeDatabase(db);
+    res.json({ success: true, item: db.gallery[index], gallery: db.gallery });
+  } else {
+    res.status(404).json({ error: 'Gallery photo not found' });
+  }
+});
+
+// DELETE Gallery Photo
+app.delete('/api/gallery/:id', (req, res) => {
+  const db = readDatabase();
+  const rawId = req.params.id;
+  const decodedId = decodeURIComponent(rawId);
+  if (!db.gallery) db.gallery = [];
+  const beforeCount = db.gallery.length;
+  db.gallery = db.gallery.filter((g: any) => g.id !== rawId && g.id !== decodedId);
+  writeDatabase(db);
+  res.json({ success: true, deleted: beforeCount !== db.gallery.length, gallery: db.gallery });
+});
+
+// -------------------------------------------------------------
+// RPC HOLDERS (Certified Pilots Registry)
+// -------------------------------------------------------------
+
+// GET RPC Holders
+app.get('/api/rpc-holders', (req, res) => {
+  const db = readDatabase();
+  res.json(db.rpcHolders || INITIAL_RPC_HOLDERS);
+});
+
+// CREATE RPC Holder (Admin)
+app.post('/api/rpc-holders', (req, res) => {
+  const db = readDatabase();
+  const { serialNo, certificateNo, rpcNo, name, category, issueYear, status } = req.body;
+
+  if (!serialNo || !certificateNo || !rpcNo || !name) {
+    return res.status(400).json({ error: 'Candidate Serial No, Certificate No, RPC No, and Name are required.' });
+  }
+
+  if (!db.rpcHolders) db.rpcHolders = [...INITIAL_RPC_HOLDERS];
+
+  // Derive issueYear from serialNo or certificateNo if not provided
+  let year = issueYear;
+  if (!year) {
+    const yearMatch = serialNo.match(/202[0-9]/);
+    year = yearMatch ? yearMatch[0] : '2026';
+  }
+
+  const newHolder = {
+    id: `rpc-${Date.now().toString().slice(-6)}`,
+    serialNo: serialNo.trim(),
+    certificateNo: certificateNo.trim(),
+    rpcNo: rpcNo.trim(),
+    name: name.trim().toUpperCase(),
+    issueYear: year,
+    category: category || 'Small Category (Multirotor)',
+    status: status || 'Verified'
+  };
+
+  db.rpcHolders.push(newHolder);
+  writeDatabase(db);
+
+  res.status(201).json({ success: true, item: newHolder, rpcHolders: db.rpcHolders });
+});
+
+// UPDATE RPC Holder (Admin)
+app.put('/api/rpc-holders/:id', (req, res) => {
+  const db = readDatabase();
+  const { id } = req.params;
+  const { serialNo, certificateNo, rpcNo, name, category, issueYear, status } = req.body;
+
+  if (!db.rpcHolders) db.rpcHolders = [...INITIAL_RPC_HOLDERS];
+
+  const index = db.rpcHolders.findIndex((h: any) => h.id === id);
+  if (index !== -1) {
+    let year = issueYear;
+    if (!year && serialNo) {
+      const yearMatch = serialNo.match(/202[0-9]/);
+      year = yearMatch ? yearMatch[0] : db.rpcHolders[index].issueYear || '2026';
+    }
+
+    db.rpcHolders[index] = {
+      ...db.rpcHolders[index],
+      serialNo: serialNo !== undefined ? serialNo.trim() : db.rpcHolders[index].serialNo,
+      certificateNo: certificateNo !== undefined ? certificateNo.trim() : db.rpcHolders[index].certificateNo,
+      rpcNo: rpcNo !== undefined ? rpcNo.trim() : db.rpcHolders[index].rpcNo,
+      name: name !== undefined ? name.trim().toUpperCase() : db.rpcHolders[index].name,
+      issueYear: year || db.rpcHolders[index].issueYear,
+      category: category !== undefined ? category : db.rpcHolders[index].category,
+      status: status !== undefined ? status : db.rpcHolders[index].status
+    };
+
+    writeDatabase(db);
+    res.json({ success: true, item: db.rpcHolders[index], rpcHolders: db.rpcHolders });
+  } else {
+    res.status(404).json({ error: 'RPC Holder record not found' });
+  }
+});
+
+// DELETE RPC Holder (Admin)
+app.delete('/api/rpc-holders/:id', (req, res) => {
+  const db = readDatabase();
+  const { id } = req.params;
+  if (!db.rpcHolders) db.rpcHolders = [...INITIAL_RPC_HOLDERS];
+  db.rpcHolders = db.rpcHolders.filter((h: any) => h.id !== id);
+  writeDatabase(db);
+  res.json({ success: true, rpcHolders: db.rpcHolders });
 });
 
 // GET Enquiries
@@ -730,6 +1096,8 @@ app.post('/api/reset', (req, res) => {
     batches: INITIAL_BATCHES,
     news: INITIAL_NEWS,
     enquiries: INITIAL_ENQUIRIES,
+    gallery: INITIAL_GALLERY,
+    rpcHolders: [...INITIAL_RPC_HOLDERS],
     lastUpdated: new Date().toISOString()
   };
   writeDatabase(defaultDb);
@@ -770,7 +1138,10 @@ async function startServer() {
 
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        hmr: false,
+      },
       appType: 'spa',
     });
     app.use(vite.middlewares);
@@ -782,9 +1153,25 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`[RPTO Server] Running on http://0.0.0.0:${PORT}`);
+  });
+
+  server.on('error', (err: any) => {
+    if (err.code === 'EADDRINUSE') {
+      console.warn(`[RPTO Server] Port ${PORT} in use, existing listener is serving.`);
+    } else {
+      console.error('[RPTO Server] Server error:', err);
+    }
+  });
+
+  process.on('SIGTERM', () => {
+    server.close(() => process.exit(0));
+  });
+  process.on('SIGINT', () => {
+    server.close(() => process.exit(0));
   });
 }
 
 startServer();
+

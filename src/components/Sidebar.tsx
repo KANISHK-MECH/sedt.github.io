@@ -10,10 +10,12 @@ import {
   Sun,
   Flame,
   Building2,
+  Images,
   Phone,
   MessageCircle,
   PhoneCall,
-  X
+  X,
+  Award
 } from 'lucide-react';
 
 interface NavItem {
@@ -27,8 +29,9 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'about', label: 'About', icon: Info },
   { id: 'courses', label: 'Courses', icon: BookOpen },
   { id: 'training', label: 'Training', icon: Layers },
+  { id: 'rpc-holders', label: 'RPC Holders', icon: Award },
   { id: 'inspections', label: 'Solar & Wind Inspection', icon: Sun },
-  { id: 'infrastructure', label: 'Infrastructure', icon: Building2 },
+  { id: 'infrastructure', label: 'Gallery', icon: Images },
   { id: 'contact', label: 'Contact', icon: Phone }
 ];
 

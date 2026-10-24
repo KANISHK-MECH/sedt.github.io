@@ -1,6 +1,7 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { SriEshwarEmblem } from '../SriEshwarLogo';
+import { MobileAnnouncementBar } from '../MobileAnnouncementBar';
 import {
   Sparkles,
   FileText,
@@ -17,7 +18,7 @@ import {
 } from 'lucide-react';
 
 export const HomeTab: React.FC = () => {
-  const { openEnrollModal, openBrochureModal, openTourModal, setActiveTab } = useApp();
+  const { openEnrollModal, openBrochureModal, openTourModal, setActiveTab, rpcHolders } = useApp();
 
   const categoryBadges = [
     {
@@ -60,6 +61,9 @@ export const HomeTab: React.FC = () => {
   return (
     <div className="flex-1 w-full h-full overflow-y-auto p-3 sm:p-4 md:p-5 lg:p-6 2xl:p-8">
       <div className="max-w-7xl 2xl:max-w-[1600px] 3xl:max-w-[1800px] w-full mx-auto flex flex-col space-y-3.5 sm:space-y-4 lg:space-y-5 min-h-full">
+        {/* Mobile Batch & News Scrollable Announcement Bars (Home section only; scrolls out of view when scrolling down) */}
+        <MobileAnnouncementBar />
+
         {/* 1. HERO SECTION */}
         <div 
           className="relative rounded-3xl text-white p-5 sm:p-6 2xl:p-7 shadow-xl border border-white/20 overflow-hidden flex flex-col justify-between shrink-0"
@@ -190,13 +194,22 @@ export const HomeTab: React.FC = () => {
               <Play className="w-3.5 h-3.5 fill-[#FFB800] text-[#FFB800]" />
               <span>Campus Tour</span>
             </button>
+
+            <button
+              id="home-hero-rpc-btn"
+              onClick={() => setActiveTab('rpc-holders')}
+              className="cursor-pointer flex items-center space-x-1.5 sm:space-x-2 px-3.5 sm:px-4 py-2.5 rounded-xl text-[11px] sm:text-xs 2xl:text-sm font-bold text-sky-200 bg-[#071D4A] hover:bg-[#073B8F] active:scale-98 border border-sky-400/30 shadow-xs transition-all whitespace-nowrap"
+            >
+              <Award className="w-3.5 h-3.5 text-[#FFB800]" />
+              <span>RPC Holders ({rpcHolders.length})</span>
+            </button>
           </div>
         </div>
 
         {/* 2. MIDDLE FEATURES ROW matching image.png */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 2xl:gap-4">
-          <div className="bg-white border border-[#CFEAFF] rounded-2xl p-3.5 sm:p-4 shadow-md shadow-sky-950/5 flex items-start space-x-3.5 hover:border-[#8CCCF5] transition-colors">
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#08245F] text-white flex items-center justify-center shrink-0 shadow-sm">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 2xl:gap-4">
+          <div className="bg-white border border-[#CFEAFF] rounded-2xl p-4 shadow-md shadow-sky-950/5 flex items-start space-x-3.5 hover:border-[#8CCCF5] transition-colors">
+            <div className="w-11 h-11 rounded-full bg-[#08245F] text-white flex items-center justify-center shrink-0 shadow-sm">
               <Compass className="w-5 h-5" />
             </div>
             <div className="space-y-1">
@@ -209,8 +222,8 @@ export const HomeTab: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white border border-[#CFEAFF] rounded-2xl p-3.5 sm:p-4 shadow-md shadow-sky-950/5 flex items-start space-x-3.5 hover:border-[#8CCCF5] transition-colors">
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#FFB800] text-[#08245F] flex items-center justify-center shrink-0 shadow-sm">
+          <div className="bg-white border border-[#CFEAFF] rounded-2xl p-4 shadow-md shadow-sky-950/5 flex items-start space-x-3.5 hover:border-[#8CCCF5] transition-colors">
+            <div className="w-11 h-11 rounded-xl bg-[#FFB800] text-[#08245F] flex items-center justify-center shrink-0 shadow-sm">
               <Zap className="w-5 h-5 fill-[#08245F] text-[#08245F]" />
             </div>
             <div className="space-y-1">
@@ -223,8 +236,8 @@ export const HomeTab: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white border border-[#CFEAFF] rounded-2xl p-3.5 sm:p-4 shadow-md shadow-sky-950/5 flex items-start space-x-3.5 hover:border-[#8CCCF5] transition-colors sm:col-span-2 lg:col-span-1">
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#087FE5] text-white flex items-center justify-center shrink-0 shadow-sm">
+          <div className="bg-white border border-[#CFEAFF] rounded-2xl p-4 shadow-md shadow-sky-950/5 flex items-start space-x-3.5 hover:border-[#8CCCF5] transition-colors">
+            <div className="w-11 h-11 rounded-full bg-[#087FE5] text-white flex items-center justify-center shrink-0 shadow-sm">
               <Target className="w-5 h-5" />
             </div>
             <div className="space-y-1">
@@ -238,9 +251,9 @@ export const HomeTab: React.FC = () => {
           </div>
         </div>
 
-        {/* 3. BOTTOM CATEGORY BADGES STRIP (Responsive 2 to 5 Columns) */}
-        <div className="bg-white border border-[#CFEAFF] rounded-2xl p-3.5 sm:p-4 2xl:p-5 shadow-md shadow-sky-950/5 space-y-2.5 mt-auto shrink-0">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+        {/* 3. BOTTOM CATEGORY BADGES STRIP (5 Columns, No Prices) */}
+        <div className="bg-white border border-[#CFEAFF] rounded-2xl p-4 2xl:p-5 shadow-md shadow-sky-950/5 space-y-2.5 mt-auto shrink-0">
+          <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Award className="w-4 h-4 2xl:w-5 2xl:h-5 text-[#08245F]" />
               <h3 className="text-xs 2xl:text-sm font-black text-[#08245F] uppercase tracking-wide">
@@ -249,15 +262,15 @@ export const HomeTab: React.FC = () => {
             </div>
             <button
               onClick={() => setActiveTab('courses')}
-              className="cursor-pointer text-[11px] 2xl:text-xs font-bold text-[#08245F] hover:text-[#FFB800] flex items-center gap-1 transition-colors self-start sm:self-auto"
+              className="cursor-pointer text-[11px] 2xl:text-xs font-bold text-[#08245F] hover:text-[#FFB800] flex items-center gap-1 transition-colors"
             >
               <span>View All Course Details & Pricing</span>
               <ArrowRight className="w-3.5 h-3.5 2xl:w-4 2xl:h-4" />
             </button>
           </div>
 
-          {/* Column Badges Strip */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-2.5 2xl:gap-3.5">
+          {/* 5 Column Badges Strip */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5 2xl:gap-3.5">
             {categoryBadges.map((badge, idx) => (
               <button
                 key={idx}

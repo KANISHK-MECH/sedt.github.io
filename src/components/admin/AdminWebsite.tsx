@@ -13,6 +13,7 @@ import {
   Download,
   RotateCcw,
   CheckCircle2,
+  ShieldCheck,
   AlertCircle,
   FileSpreadsheet,
   LogOut,
@@ -21,13 +22,8 @@ import {
   Edit2,
   X,
   Activity,
-  Layers,
   Phone,
   Mail,
-  Filter,
-  ShieldCheck,
-  TrendingUp,
-  Clock,
   ChevronRight,
   Database,
   ExternalLink,
@@ -40,10 +36,16 @@ import {
   Check,
   ArrowLeft,
   AlertTriangle,
-  SlidersHorizontal,
-  Send
+  Send,
+  Menu,
+  CheckCheck,
+  Images,
+  Camera,
+  Upload,
+  Image as ImageIcon
 } from 'lucide-react';
-import { Course, Batch, NewsItem, Enquiry } from '../../types';
+import { Course, Batch, Enquiry, GalleryItem, RpcHolder } from '../../types';
+import { AdminRpcHoldersSection } from './AdminRpcHoldersSection';
 
 export const AdminWebsite: React.FC = () => {
   const {
@@ -53,9 +55,17 @@ export const AdminWebsite: React.FC = () => {
     updateBatch,
     addBatch,
     news,
-    updateNews,
     addNewsItem,
     deleteNewsItem,
+    gallery,
+    addGalleryItem,
+    updateGalleryItem,
+    deleteGalleryItem,
+    rpcHolders,
+    addRpcHolder,
+    updateRpcHolder,
+    deleteRpcHolder,
+    openLightbox,
     enquiries,
     updateEnquiryStatus,
     deleteEnquiry,
@@ -82,66 +92,34 @@ export const AdminWebsite: React.FC = () => {
   const [passcode, setPasscode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [activeTab, setActiveTab] = useState<'overview' | 'enquiries' | 'courses' | 'batches' | 'news' | 'integrations'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'enquiries' | 'courses' | 'batches' | 'rpc-holders' | 'news' | 'gallery'>('overview');
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
-  // Integrations state
-  const [sheetsUrlInput, setSheetsUrlInput] = useState('');
-  const [sheetsConfigured, setSheetsConfigured] = useState(false);
-  const [isTestingSync, setIsTestingSync] = useState(false);
-  const [testSyncResult, setTestSyncResult] = useState<any>(null);
-  const [isSavingSheetsUrl, setIsSavingSheetsUrl] = useState(false);
-  const [copiedScript, setCopiedScript] = useState(false);
-
-  // Load integration status
-  React.useEffect(() => {
-    fetch('/api/integrations/google-sheets')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data) {
-          setSheetsConfigured(data.configured);
-          setSheetsUrlInput(data.url || '');
-        }
-      })
-      .catch(() => {});
-  }, []);
-
-  const handleSaveGoogleSheetsUrl = async (testPing = false) => {
-    if (testPing) setIsTestingSync(true);
-    else setIsSavingSheetsUrl(true);
-
-    try {
-      const res = await fetch('/api/integrations/google-sheets', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: sheetsUrlInput, testPing })
-      });
-      const data = await res.json();
-      if (data.success) {
-        setSheetsConfigured(Boolean(sheetsUrlInput.trim()));
-        if (testPing) {
-          setTestSyncResult(data.testResult);
-          showToast(
-            data.testResult?.synced
-              ? 'Test row appended to Google Sheets successfully!'
-              : `Sync test: ${data.testResult?.message || 'Check URL'}`,
-            data.testResult?.synced ? 'success' : 'info'
-          );
-        } else {
-          showToast('Google Sheets Webhook URL saved successfully!', 'success');
-        }
-      }
-    } catch {
-      showToast('Failed to save Google Sheets settings', 'error');
-    } finally {
-      setIsSavingSheetsUrl(false);
-      setIsTestingSync(false);
-    }
-  };
+  // Gallery Management States
+  const [showAddGalleryModal, setShowAddGalleryModal] = useState(false);
+  const [editingGalleryItem, setEditingGalleryItem] = useState<GalleryItem | null>(null);
+  const [gallerySearch, setGallerySearch] = useState('');
+  const [galleryCategoryFilter, setGalleryCategoryFilter] = useState<string>('all');
+  const [newGalleryForm, setNewGalleryForm] = useState<{
+    name: string;
+    subtitle: string;
+    description: string;
+    image: string;
+    stats: string;
+    category: string;
+  }>({
+    name: '',
+    subtitle: '',
+    description: '',
+    image: '',
+    stats: 'Campus Photo',
+    category: 'Training'
+  });
 
   // Enquiry filters, track filter and candidate message modal
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
-  const [trackFilter, setTrackFilter] = useState<'all' | 'dgca' | 'glider' | 'drone-design' | 'repair' | 'internship' | 'solar-inspection'>('all');
+  const [trackFilter, setTrackFilter] = useState<'all' | 'dgca' | 'glider' | 'drone-design' | 'repair' | 'internship' | 'solar-inspection' | 'wind-inspection'>('all');
   const [selectedEnquiry, setSelectedEnquiry] = useState<Enquiry | null>(null);
   const [adminNoteInput, setAdminNoteInput] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -178,6 +156,14 @@ export const AdminWebsite: React.FC = () => {
     } else {
       window.location.href = '/';
     }
+  };
+
+  // Helper to format WhatsApp phone number and URL reliably
+  const getWhatsAppUrl = (phone: string, fullName: string, courseName: string) => {
+    const digits = (phone || '').replace(/[^0-9]/g, '');
+    const formattedPhone = digits.length === 10 ? `91${digits}` : digits;
+    const msg = `Hello ${fullName}, greetings from Sri Eshwar Drone Tech Pvt Ltd (DGCA RPTO). We received your application for ${courseName}.`;
+    return `https://wa.me/${formattedPhone}?text=${encodeURIComponent(msg)}`;
   };
 
   // Helper to parse key-value pairs from applicant notes
@@ -224,14 +210,25 @@ export const AdminWebsite: React.FC = () => {
       return {
         type: 'solar-inspection' as const,
         label: '☀️ Solar PV Drone Inspection',
+        shortLabel: 'Solar PV',
         icon: '☀️',
         bg: 'bg-amber-100 text-amber-950 border-amber-300 font-black'
+      };
+    }
+    if (cId.includes('wind') || cName.includes('wind') || msg.includes('wind') || msg.includes('turbine') || msg.includes('blade')) {
+      return {
+        type: 'wind-inspection' as const,
+        label: '💨 Wind Turbine Drone Inspection',
+        shortLabel: 'Wind Turbine',
+        icon: '💨',
+        bg: 'bg-sky-100 text-sky-950 border-sky-300 font-black'
       };
     }
     if (cId.includes('glider') || cName.includes('glider') || msg.includes('glider')) {
       return {
         type: 'glider' as const,
         label: 'Track 1 · Glider Design',
+        shortLabel: 'Glider',
         icon: '🛩️',
         bg: 'bg-blue-50 text-blue-900 border-blue-200'
       };
@@ -240,6 +237,7 @@ export const AdminWebsite: React.FC = () => {
       return {
         type: 'drone-design' as const,
         label: 'Track 2 · Drone Design & Dev',
+        shortLabel: 'Drone Dev',
         icon: '🚁',
         bg: 'bg-red-50 text-red-900 border-red-200'
       };
@@ -248,6 +246,7 @@ export const AdminWebsite: React.FC = () => {
       return {
         type: 'repair' as const,
         label: 'Track 3 · Drone Repair & Maint',
+        shortLabel: 'Repair',
         icon: '🔧',
         bg: 'bg-amber-50 text-amber-900 border-amber-200'
       };
@@ -256,6 +255,7 @@ export const AdminWebsite: React.FC = () => {
       return {
         type: 'internship' as const,
         label: 'Track 4 · Internship (2 Weeks)',
+        shortLabel: 'Internship',
         icon: '🎓',
         bg: 'bg-purple-50 text-purple-900 border-purple-200'
       };
@@ -263,6 +263,7 @@ export const AdminWebsite: React.FC = () => {
     return {
       type: 'dgca' as const,
       label: 'DGCA Commercial Pilot RPC',
+      shortLabel: 'DGCA RPC',
       icon: '🪪',
       bg: 'bg-indigo-50 text-indigo-900 border-indigo-200'
     };
@@ -285,6 +286,7 @@ export const AdminWebsite: React.FC = () => {
     setIsAuthenticated(false);
     sessionStorage.removeItem('sri_eshwar_admin_auth');
     setPasscode('');
+    setIsMobileNavOpen(false);
     showToast('Logged out of Admin Portal', 'info');
   };
 
@@ -363,6 +365,7 @@ export const AdminWebsite: React.FC = () => {
   const repairCount = enquiries.filter((e) => getEnquiryTrackBadge(e).type === 'repair').length;
   const internshipCount = enquiries.filter((e) => getEnquiryTrackBadge(e).type === 'internship').length;
   const solarInspectionCount = enquiries.filter((e) => getEnquiryTrackBadge(e).type === 'solar-inspection').length;
+  const windInspectionCount = enquiries.filter((e) => getEnquiryTrackBadge(e).type === 'wind-inspection').length;
 
   // Filtered courses
   const filteredCourses = courses.filter(
@@ -372,48 +375,59 @@ export const AdminWebsite: React.FC = () => {
       c.weightClass.toLowerCase().includes(courseSearch.toLowerCase())
   );
 
+  // Navigation tab configuration
+  const navTabs = [
+    { id: 'overview', label: 'Overview', icon: Activity, badge: null },
+    { id: 'enquiries', label: 'Admissions', icon: Users, badge: newCount > 0 ? newCount : null },
+    { id: 'courses', label: 'Courses', icon: Award, badge: courses.length },
+    { id: 'batches', label: 'Batches', icon: Calendar, badge: batches.length },
+    { id: 'rpc-holders', label: 'RPC Holders', icon: ShieldCheck, badge: rpcHolders.length },
+    { id: 'news', label: 'News & Notices', icon: Sparkles, badge: news.length },
+    { id: 'gallery', label: 'Gallery', icon: Images, badge: gallery.length }
+  ] as const;
+
   // -------------------------------------------------------------
-  // VIEW: AUTHENTICATION LOCK SCREEN
+  // VIEW: AUTHENTICATION LOCK SCREEN (RESPONSIVE FOR ALL DEVICES)
   // -------------------------------------------------------------
   if (!isAuthenticated) {
     return (
-      <div className="h-screen w-full bg-[#071D4A] flex flex-col justify-between text-slate-100 font-sans p-4 sm:p-6 select-text overflow-y-auto">
+      <div className="min-h-[100dvh] w-full bg-[#071D4A] flex flex-col justify-between text-slate-100 font-sans p-4 sm:p-6 select-text overflow-y-auto">
         {/* Header */}
-        <div className="max-w-5xl w-full mx-auto flex items-center justify-between py-2">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-[#FFB800] text-[#08245F] flex items-center justify-center font-black text-sm shadow-md">
+        <header className="max-w-4xl w-full mx-auto flex items-center justify-between py-2 gap-3">
+          <div className="flex items-center space-x-2.5 sm:space-x-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#FFB800] text-[#08245F] flex items-center justify-center font-black text-xs sm:text-sm shadow-md shrink-0">
               RPTO
             </div>
-            <div>
-              <h1 className="text-sm sm:text-base font-black uppercase tracking-wider text-white">
+            <div className="min-w-0">
+              <h1 className="text-xs sm:text-base font-black uppercase tracking-wider text-white truncate">
                 Sri Eshwar Drone Tech Pvt Ltd
               </h1>
-              <p className="text-[11px] text-slate-400 font-medium">
-                DGCA Authorized Remote Pilot Training Organization · TN 21/2024
+              <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate">
+                DGCA Authorized RPTO · TN 21/2024
               </p>
             </div>
           </div>
           <button
             type="button"
             onClick={handleExitAdmin}
-            className="cursor-pointer text-xs font-bold text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700 px-3 py-1.5 rounded-lg border border-slate-700 transition-colors flex items-center gap-1.5"
+            className="cursor-pointer text-xs font-bold text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700 px-3 py-2 rounded-xl border border-slate-700 transition-colors flex items-center gap-1.5 shrink-0 min-h-[40px]"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Public Website</span>
+            <span className="hidden xs:inline">Back to Public Site</span>
           </button>
-        </div>
+        </header>
 
         {/* Login Box */}
-        <div className="max-w-md w-full mx-auto my-auto bg-[#08245F] border border-slate-700/80 rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6">
+        <main className="max-w-md w-full mx-auto my-6 sm:my-auto bg-[#08245F] border border-slate-700/80 rounded-2xl p-5 sm:p-8 shadow-2xl space-y-5">
           <div className="text-center space-y-2">
             <div className="w-14 h-14 mx-auto rounded-2xl bg-[#FFB800]/20 border border-[#FFB800]/40 flex items-center justify-center text-[#FFB800]">
               <Lock className="w-7 h-7" />
             </div>
-            <h2 className="text-xl font-black text-white tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
               RPTO Management Console
             </h2>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Enter your authorized administrative passcode to manage student admissions, flight batches, and course schedules.
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              Enter administrative passcode to manage student admissions, flight batches, and courses.
             </p>
           </div>
 
@@ -423,7 +437,7 @@ export const AdminWebsite: React.FC = () => {
                 Administrative Passcode
               </label>
               <div className="relative">
-                <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={passcode}
@@ -432,20 +446,21 @@ export const AdminWebsite: React.FC = () => {
                     if (errorMsg) setErrorMsg('');
                   }}
                   placeholder="Enter passcode (admin123)"
-                  className="w-full bg-[#071D4A] border border-slate-600 rounded-xl pl-10 pr-11 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-hidden focus:border-[#FFB800] focus:ring-1 focus:ring-[#FFB800] transition-all"
+                  className="w-full bg-[#071D4A] border border-slate-600 rounded-xl pl-10 pr-11 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-[#FFB800] focus:ring-1 focus:ring-[#FFB800] transition-all min-h-[44px]"
                   autoFocus
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer p-1"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer p-2 min-h-[40px] flex items-center justify-center"
                   title={showPassword ? 'Hide passcode' : 'Show passcode'}
+                  aria-label={showPassword ? 'Hide passcode' : 'Show passcode'}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
               {errorMsg && (
-                <p className="text-xs text-red-400 font-semibold mt-2 flex items-center gap-1.5 bg-red-950/40 p-2 rounded-lg border border-red-800/60">
+                <p className="text-xs text-red-400 font-semibold mt-2 flex items-center gap-1.5 bg-red-950/40 p-2.5 rounded-lg border border-red-800/60">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{errorMsg}</span>
                 </p>
@@ -454,10 +469,10 @@ export const AdminWebsite: React.FC = () => {
 
             <button
               type="submit"
-              className="w-full cursor-pointer py-3 rounded-xl bg-[#FFB800] hover:bg-[#E5A600] text-[#08245F] font-black text-sm tracking-wider uppercase transition-all shadow-md active:scale-98 flex items-center justify-center gap-2"
+              className="w-full cursor-pointer py-3 rounded-xl bg-[#FFB800] hover:bg-[#E5A600] active:scale-[0.98] text-[#08245F] font-black text-sm tracking-wider uppercase transition-all shadow-md flex items-center justify-center gap-2 min-h-[44px]"
             >
               <Unlock className="w-4 h-4" />
-              Access RPTO Console
+              <span>Access RPTO Console</span>
             </button>
 
             {/* Quick Demo Key autofill button */}
@@ -467,28 +482,29 @@ export const AdminWebsite: React.FC = () => {
                 setPasscode('admin123');
                 setErrorMsg('');
               }}
-              className="w-full text-center text-xs text-slate-400 hover:text-[#FFB800] py-1 cursor-pointer transition-colors"
+              className="w-full text-center text-xs text-slate-400 hover:text-[#FFB800] py-2 cursor-pointer transition-colors min-h-[38px] flex items-center justify-center gap-1"
             >
-              Click to autofill authorized demo key: <span className="font-mono font-bold text-[#FFB800]">admin123</span>
+              <span>Click to autofill demo key:</span>
+              <span className="font-mono font-bold text-[#FFB800] bg-black/30 px-1.5 py-0.5 rounded">admin123</span>
             </button>
           </form>
 
-          <div className="pt-4 border-t border-slate-700/60 text-center">
+          <div className="pt-3 border-t border-slate-700/60 text-center">
             <button
               type="button"
               onClick={handleExitAdmin}
-              className="text-xs text-slate-400 hover:text-white flex items-center justify-center gap-1.5 mx-auto cursor-pointer"
+              className="text-xs text-slate-400 hover:text-white flex items-center justify-center gap-1.5 mx-auto cursor-pointer py-1"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to Public Website</span>
             </button>
           </div>
-        </div>
+        </main>
 
         {/* Footer */}
-        <div className="max-w-5xl w-full mx-auto text-center py-2 text-[11px] text-slate-400">
+        <footer className="max-w-4xl w-full mx-auto text-center py-2 text-[11px] text-slate-400">
           Sri Eshwar Drone Tech Pvt Ltd · DGCA/RPTO-TN 21/2024 · Kinathukadavu Airfield, Coimbatore
-        </div>
+        </footer>
       </div>
     );
   }
@@ -497,30 +513,43 @@ export const AdminWebsite: React.FC = () => {
   // VIEW: AUTHENTICATED STANDALONE ADMIN WEBSITE DASHBOARD
   // -------------------------------------------------------------
   return (
-    <div className="h-full w-full bg-slate-100 flex flex-col font-sans text-slate-800 overflow-hidden select-text">
-      {/* 1. TOP BAR */}
-      <header className="bg-[#08245F] text-white px-3 sm:px-6 py-2.5 shrink-0 flex items-center justify-between shadow-md z-20 border-b border-slate-700">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded-lg bg-[#FFB800] text-[#08245F] font-black flex items-center justify-center text-xs shadow-xs">
+    <div className="h-full w-full bg-slate-100 flex flex-col font-sans text-slate-800 overflow-hidden select-text relative">
+      {/* 1. TOP HEADER BAR (RESPONSIVE ACROSS ALL DEVICES) */}
+      <header className="bg-[#08245F] text-white px-3 sm:px-6 py-2.5 shrink-0 flex items-center justify-between shadow-md z-30 border-b border-slate-700 min-h-[56px]">
+        {/* Left: Mobile Menu Trigger + Brand Info */}
+        <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
+          {/* Mobile hamburger menu toggle */}
+          <button
+            type="button"
+            onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
+            className="md:hidden text-white p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 active:bg-slate-600 transition-colors cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center shrink-0"
+            title="Toggle Admin Menu"
+            aria-label="Toggle Admin Menu"
+          >
+            {isMobileNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+
+          <div className="w-8 h-8 rounded-lg bg-[#FFB800] text-[#08245F] font-black flex items-center justify-center text-xs shadow-xs shrink-0">
             RPTO
           </div>
-          <div>
-            <div className="flex items-center space-x-2">
-              <h1 className="text-sm sm:text-base font-black uppercase tracking-wider text-white">
-                Sri Eshwar RPTO Portal
+          <div className="min-w-0">
+            <div className="flex items-center space-x-1.5 sm:space-x-2">
+              <h1 className="text-xs sm:text-base font-black uppercase tracking-wider text-white truncate">
+                Sri Eshwar RPTO
               </h1>
-              <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              <span className="text-[9px] sm:text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0">
                 LIVE
               </span>
             </div>
-            <p className="text-[11px] text-slate-300 hidden sm:block">
-              Authorization: DGCA/RPTO-TN 21/2024 · Kinathukadavu Airfield
+            <p className="text-[10px] sm:text-[11px] text-slate-300 hidden sm:block truncate">
+              DGCA/RPTO-TN 21/2024 · Kinathukadavu
             </p>
           </div>
         </div>
 
-        <div className="flex items-center space-x-1.5 sm:space-x-2.5">
-          {/* Live Database Sync Indicator */}
+        {/* Right: Actions, Sync & Logout */}
+        <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
+          {/* Live Database Sync Indicator (lg+) */}
           <div className="hidden lg:flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-slate-800/90 border border-slate-700 text-xs">
             <span
               className={`w-2 h-2 rounded-full ${
@@ -540,168 +569,252 @@ export const AdminWebsite: React.FC = () => {
             </span>
           </div>
 
+          {/* Sync Button */}
           <button
             type="button"
             onClick={handleManualSync}
             disabled={isRefreshing}
-            className="cursor-pointer text-xs font-bold text-slate-200 hover:text-white bg-slate-800 hover:bg-slate-700 px-2.5 py-1.5 rounded-lg border border-slate-600 transition-colors flex items-center gap-1.5"
+            className="cursor-pointer text-xs font-bold text-slate-200 hover:text-white bg-slate-800 hover:bg-slate-700 px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-600 transition-colors flex items-center gap-1.5 min-h-[38px]"
             title="Force immediate synchronization with server database"
           >
-            <RefreshCw className={`w-3.5 h-3.5 text-blue-400 ${isRefreshing ? 'animate-spin' : ''}`} />
-            <span className="hidden md:inline">Sync DB</span>
+            <RefreshCw className={`w-3.5 h-3.5 text-blue-400 shrink-0 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Sync DB</span>
           </button>
 
+          {/* Backup Button (hidden on mobile, in drawer instead) */}
           <button
             type="button"
             onClick={exportFullDatabaseJSON}
-            className="cursor-pointer text-xs font-bold text-slate-200 hover:text-white bg-slate-800 hover:bg-slate-700 px-2.5 py-1.5 rounded-lg border border-slate-600 transition-colors flex items-center gap-1.5 hidden md:flex"
+            className="cursor-pointer text-xs font-bold text-slate-200 hover:text-white bg-slate-800 hover:bg-slate-700 px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-600 transition-colors flex items-center gap-1.5 hidden md:flex min-h-[38px]"
             title="Download full database JSON backup"
           >
-            <Database className="w-3.5 h-3.5 text-[#FFB800]" />
-            <span>Backup DB</span>
+            <Database className="w-3.5 h-3.5 text-[#FFB800] shrink-0" />
+            <span className="hidden lg:inline">Backup DB</span>
           </button>
 
+          {/* Return to Website Button */}
           <button
             type="button"
             onClick={handleExitAdmin}
-            className="cursor-pointer text-xs font-bold text-sky-200 hover:text-white bg-blue-900/60 hover:bg-blue-800 border border-blue-700/80 px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
+            className="cursor-pointer text-xs font-bold text-sky-200 hover:text-white bg-blue-900/60 hover:bg-blue-800 border border-blue-700/80 px-2.5 sm:px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 min-h-[38px]"
             title="Return to Public Website"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Back to Website</span>
+            <ArrowLeft className="w-3.5 h-3.5 shrink-0" />
+            <span className="hidden sm:inline">Website</span>
           </button>
 
-          <a
-            href="/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="cursor-pointer text-xs font-bold text-slate-200 hover:text-white bg-slate-800/80 hover:bg-slate-700 border border-slate-600 px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 hidden xl:flex"
-            title="Open Live Public Website in new tab"
-          >
-            <ExternalLink className="w-3.5 h-3.5 text-cyan-300" />
-            <span>New Tab</span>
-          </a>
-
+          {/* Sign Out Button */}
           <button
             type="button"
             onClick={handleLogout}
-            className="cursor-pointer text-xs font-bold text-slate-200 hover:text-white bg-red-950/70 hover:bg-red-900 border border-red-800/80 px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
+            className="cursor-pointer text-xs font-bold text-slate-200 hover:text-white bg-red-950/70 hover:bg-red-900 border border-red-800/80 px-2.5 sm:px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 min-h-[38px]"
+            title="Sign out of Admin Portal"
           >
-            <LogOut className="w-3.5 h-3.5 text-red-300" />
-            <span className="hidden sm:inline">Sign Out</span>
+            <LogOut className="w-3.5 h-3.5 text-red-300 shrink-0" />
+            <span className="hidden md:inline">Sign Out</span>
           </button>
         </div>
       </header>
 
-      {/* 2. MAIN BODY (SIDEBAR + CONTENT) */}
+      {/* 2. MOBILE DRAWER OVERLAY (SLIDE-OUT MENU FOR PHONES/TABLETS) */}
+      {isMobileNavOpen && (
+        <div className="fixed inset-0 z-40 md:hidden flex animate-in fade-in duration-200">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+            onClick={() => setIsMobileNavOpen(false)}
+          />
+
+          {/* Drawer Content */}
+          <div className="relative w-72 max-w-[85vw] bg-white h-full shadow-2xl flex flex-col justify-between z-50 p-4 overflow-y-auto animate-in slide-in-from-left duration-200">
+            <div className="space-y-4">
+              {/* Drawer Top */}
+              <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+                <div className="flex items-center space-x-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-[#FFB800] text-[#08245F] font-black flex items-center justify-center text-xs">
+                    RPTO
+                  </div>
+                  <div>
+                    <h3 className="font-black text-xs uppercase text-[#08245F]">Admin Console</h3>
+                    <p className="text-[10px] text-slate-500">DGCA/RPTO-TN 21/2024</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsMobileNavOpen(false)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
+                  aria-label="Close menu"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Navigation Items */}
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 mb-1">
+                  Management Sections
+                </p>
+                {navTabs.map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => {
+                        setActiveTab(tab.id as any);
+                        setIsMobileNavOpen(false);
+                      }}
+                      className={`w-full cursor-pointer flex items-center justify-between px-3 py-2.5 rounded-xl font-bold text-xs transition-all min-h-[44px] ${
+                        isActive
+                          ? 'bg-[#08245F] text-white shadow-xs'
+                          : 'text-slate-700 hover:bg-slate-100 active:bg-slate-200'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Icon className={`w-4 h-4 ${isActive ? 'text-[#FFB800]' : 'text-slate-500'}`} />
+                        <span>{tab.label}</span>
+                      </div>
+                      {tab.badge !== null && (
+                        <span
+                          className={`text-[10px] px-2 py-0.5 rounded-full font-black ${
+                            tab.id === 'enquiries' && newCount > 0
+                              ? 'bg-red-600 text-white'
+                              : isActive
+                              ? 'bg-white/20 text-white'
+                              : 'bg-slate-200 text-slate-700'
+                          }`}
+                        >
+                          {tab.badge}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Mobile Quick Utilities */}
+              <div className="pt-3 border-t border-slate-200 space-y-1.5">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 mb-1">
+                  Database Utilities
+                </p>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleManualSync();
+                    setIsMobileNavOpen(false);
+                  }}
+                  className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100 flex items-center gap-2 min-h-[40px] cursor-pointer"
+                >
+                  <RefreshCw className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Sync Server Database</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    exportFullDatabaseJSON();
+                    setIsMobileNavOpen(false);
+                  }}
+                  className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100 flex items-center gap-2 min-h-[40px] cursor-pointer"
+                >
+                  <Database className="w-3.5 h-3.5 text-[#FFB800]" />
+                  <span>Download DB Backup (JSON)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    exportEnquiriesCSV();
+                    setIsMobileNavOpen(false);
+                  }}
+                  className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100 flex items-center gap-2 min-h-[40px] cursor-pointer"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Export Admissions CSV</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileNavOpen(false);
+                    handleExitAdmin();
+                  }}
+                  className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-blue-800 hover:bg-blue-50 flex items-center gap-2 min-h-[40px] cursor-pointer"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Back to Public Website</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Drawer Bottom */}
+            <div className="pt-4 border-t border-slate-200 space-y-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileNavOpen(false);
+                  setShowResetConfirmModal(true);
+                }}
+                className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 flex items-center gap-2 cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reset System Data</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 flex items-center gap-2 cursor-pointer"
+              >
+                <LogOut className="w-3.5 h-3.5 text-red-500" />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. MAIN BODY (SIDEBAR FOR TABLET/DESKTOP + SCROLLABLE MAIN CONTENT) */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0 w-full relative">
-        {/* Navigation Sidebar */}
-        <aside className="w-64 bg-white border-r border-slate-200 shrink-0 flex flex-col justify-between hidden md:flex min-h-0 overflow-y-auto">
+        {/* Desktop & Tablet Sidebar */}
+        <aside className="w-56 lg:w-64 bg-white border-r border-slate-200 shrink-0 flex-col justify-between hidden md:flex min-h-0 overflow-y-auto">
           <div className="p-3 space-y-1.5">
-            <button
-              type="button"
-              onClick={() => setActiveTab('overview')}
-              className={`w-full cursor-pointer flex items-center justify-between px-3 py-2.5 rounded-xl font-bold text-xs transition-all ${
-                activeTab === 'overview'
-                  ? 'bg-[#08245F] text-white shadow-xs'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <Activity className="w-4 h-4 text-[#FFB800]" />
-                <span>Dashboard Overview</span>
-              </div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('enquiries')}
-              className={`w-full cursor-pointer flex items-center justify-between px-3 py-2.5 rounded-xl font-bold text-xs transition-all ${
-                activeTab === 'enquiries'
-                  ? 'bg-[#08245F] text-white shadow-xs'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <Users className="w-4 h-4 text-blue-400" />
-                <span>Admissions & Enquiries</span>
-              </div>
-              {newCount > 0 ? (
-                <span className="bg-[#d71920] text-white text-[10px] font-black px-2 py-0.5 rounded-full">
-                  {newCount}
-                </span>
-              ) : (
-                <span className="text-[10px] text-slate-400 font-semibold">{enquiries.length}</span>
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('courses')}
-              className={`w-full cursor-pointer flex items-center justify-between px-3 py-2.5 rounded-xl font-bold text-xs transition-all ${
-                activeTab === 'courses'
-                  ? 'bg-[#08245F] text-white shadow-xs'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <Award className="w-4 h-4 text-amber-400" />
-                <span>Courses & Fee Matrix</span>
-              </div>
-              <span className="text-[10px] text-slate-400 font-semibold">{courses.length}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('batches')}
-              className={`w-full cursor-pointer flex items-center justify-between px-3 py-2.5 rounded-xl font-bold text-xs transition-all ${
-                activeTab === 'batches'
-                  ? 'bg-[#08245F] text-white shadow-xs'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <Calendar className="w-4 h-4 text-emerald-400" />
-                <span>Flight Batches</span>
-              </div>
-              <span className="text-[10px] text-slate-400 font-semibold">{batches.length}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('news')}
-              className={`w-full cursor-pointer flex items-center justify-between px-3 py-2.5 rounded-xl font-bold text-xs transition-all ${
-                activeTab === 'news'
-                  ? 'bg-[#08245F] text-white shadow-xs'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <Sparkles className="w-4 h-4 text-purple-400" />
-                <span>Announcements & News</span>
-              </div>
-              <span className="text-[10px] text-slate-400 font-semibold">{news.length}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('integrations')}
-              className={`w-full cursor-pointer flex items-center justify-between px-3 py-2.5 rounded-xl font-bold text-xs transition-all ${
-                activeTab === 'integrations'
-                  ? 'bg-[#08245F] text-white shadow-xs'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
-                <span>Google Sheets & Email</span>
-              </div>
-              <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${
-                sheetsConfigured ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
-              }`}>
-                {sheetsConfigured ? 'Active' : 'Setup'}
-              </span>
-            </button>
+            {navTabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`w-full cursor-pointer flex items-center justify-between px-3 py-2.5 rounded-xl font-bold text-xs transition-all ${
+                    isActive
+                      ? 'bg-[#08245F] text-white shadow-xs'
+                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[#FFB800]' : 'text-slate-400'}`} />
+                    <span className="truncate">{tab.label}</span>
+                  </div>
+                  {tab.badge !== null && (
+                    <span
+                      className={`text-[10px] px-2 py-0.5 rounded-full font-black shrink-0 ${
+                        tab.id === 'enquiries' && newCount > 0
+                          ? 'bg-[#d71920] text-white'
+                          : isActive
+                          ? 'bg-white/20 text-white'
+                          : 'bg-slate-100 text-slate-600'
+                      }`}
+                    >
+                      {tab.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
 
           {/* Sidebar Footer Operations */}
@@ -711,7 +824,7 @@ export const AdminWebsite: React.FC = () => {
                 <span>Storage Target:</span>
                 <span className="font-mono text-[10px] bg-slate-200 px-1.5 py-0.5 rounded text-slate-700">rpto-db.json</span>
               </div>
-              <p className="text-[10px] text-slate-500">
+              <p className="text-[10px] text-slate-500 leading-tight">
                 Full two-way persistence active for all registrations and course fee updates.
               </p>
             </div>
@@ -722,73 +835,39 @@ export const AdminWebsite: React.FC = () => {
               className="w-full cursor-pointer flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-slate-500 hover:text-red-700 hover:bg-red-50 transition-colors"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              Reset System Data
+              <span>Reset System Data</span>
             </button>
           </div>
         </aside>
 
-        {/* Top Mobile Subnav */}
-        <div className="md:hidden bg-white border-b border-slate-200 px-3 py-2 flex items-center space-x-2 overflow-x-auto shrink-0 shadow-2xs">
-          {(
-            [
-              { id: 'overview', label: 'Overview', badge: null },
-              { id: 'enquiries', label: 'Admissions', badge: newCount > 0 ? newCount : null },
-              { id: 'courses', label: 'Courses', badge: courses.length },
-              { id: 'batches', label: 'Batches', badge: batches.length },
-              { id: 'news', label: 'News', badge: news.length },
-              { id: 'integrations', label: 'Sheets & Email', badge: sheetsConfigured ? '✓' : '!' }
-            ] as const
-          ).map((tab) => (
-            <button
-              type="button"
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
-                activeTab === tab.id ? 'bg-[#08245F] text-white' : 'bg-slate-100 text-slate-600'
-              }`}
-            >
-              <span>{tab.label}</span>
-              {tab.badge !== null && (
-                <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
-                    tab.id === 'enquiries' && newCount > 0
-                      ? 'bg-red-600 text-white'
-                      : activeTab === tab.id
-                      ? 'bg-white/20 text-white'
-                      : 'bg-slate-200 text-slate-700'
-                  }`}
-                >
-                  {tab.badge}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
 
-        {/* Content Area */}
+        {/* Content Area - fully responsive with mobile bottom bar offset */}
         <main
           id="admin-main-scrollable"
-          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 overscroll-contain"
+          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3.5 sm:p-5 md:p-6 lg:p-8 pb-20 md:pb-8 overscroll-contain"
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
+          {/* ========================================================= */}
           {/* TAB 1: OVERVIEW */}
+          {/* ========================================================= */}
           {activeTab === 'overview' && (
-            <div className="max-w-6xl mx-auto space-y-6">
+            <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
+              {/* Heading */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-xl font-black text-[#08245F] tracking-tight uppercase">
+                  <h2 className="text-lg sm:text-xl font-black text-[#08245F] tracking-tight uppercase">
                     Admissions & Operations Dashboard
                   </h2>
                   <p className="text-xs text-slate-500 font-medium">
                     Real-time synchronization for candidate applications and airfield flight batches.
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 self-start sm:self-auto">
                   <button
                     type="button"
                     onClick={handleManualSync}
                     disabled={isRefreshing}
-                    className="cursor-pointer text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 px-3 py-2 rounded-xl flex items-center gap-1.5 shadow-2xs"
+                    className="cursor-pointer text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 px-3 py-2 rounded-xl flex items-center gap-1.5 shadow-2xs min-h-[38px]"
                   >
                     <RefreshCw className={`w-3.5 h-3.5 text-blue-600 ${isRefreshing ? 'animate-spin' : ''}`} />
                     <span>Sync Live Data</span>
@@ -796,22 +875,22 @@ export const AdminWebsite: React.FC = () => {
                 </div>
               </div>
 
-              {/* KPI Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* KPI Cards (Responsive: 2-col on mobile, 5-col on desktop) */}
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-4">
                 <div
                   onClick={() => {
                     setActiveTab('enquiries');
                     setStatusFilter('All');
                     setTrackFilter('all');
                   }}
-                  className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs space-y-1 cursor-pointer hover:border-blue-400 transition-colors"
+                  className="bg-white rounded-2xl p-3.5 sm:p-4 border border-slate-200 shadow-xs space-y-1 cursor-pointer hover:border-blue-400 active:scale-[0.98] transition-all"
                 >
-                  <div className="flex items-center justify-between text-slate-500 text-xs font-bold">
+                  <div className="flex items-center justify-between text-slate-500 text-[11px] sm:text-xs font-bold">
                     <span>Total Applications</span>
-                    <Users className="w-4 h-4 text-blue-600" />
+                    <Users className="w-4 h-4 text-blue-600 shrink-0" />
                   </div>
-                  <div className="text-2xl font-black text-[#08245F]">{enquiries.length}</div>
-                  <p className="text-[11px] text-amber-700 font-semibold flex items-center gap-1">
+                  <div className="text-xl sm:text-2xl font-black text-[#08245F]">{enquiries.length}</div>
+                  <p className="text-[10px] sm:text-[11px] text-amber-700 font-semibold flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
                     {newCount} pending review
                   </p>
@@ -822,86 +901,63 @@ export const AdminWebsite: React.FC = () => {
                     setActiveTab('enquiries');
                     setStatusFilter('Enrolled');
                   }}
-                  className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs space-y-1 cursor-pointer hover:border-emerald-400 transition-colors"
+                  className="bg-white rounded-2xl p-3.5 sm:p-4 border border-slate-200 shadow-xs space-y-1 cursor-pointer hover:border-emerald-400 active:scale-[0.98] transition-all"
                 >
-                  <div className="flex items-center justify-between text-slate-500 text-xs font-bold">
+                  <div className="flex items-center justify-between text-slate-500 text-[11px] sm:text-xs font-bold">
                     <span>Enrolled Candidates</span>
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                   </div>
-                  <div className="text-2xl font-black text-emerald-700">{enrolledCount}</div>
-                  <p className="text-[11px] text-slate-500">
+                  <div className="text-xl sm:text-2xl font-black text-emerald-700">{enrolledCount}</div>
+                  <p className="text-[10px] sm:text-[11px] text-slate-500 truncate">
                     {enquiries.length > 0 ? `${Math.round((enrolledCount / enquiries.length) * 100)}% conversion rate` : '0%'}
                   </p>
                 </div>
 
                 <div
                   onClick={() => setActiveTab('batches')}
-                  className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs space-y-1 cursor-pointer hover:border-amber-400 transition-colors"
+                  className="bg-white rounded-2xl p-3.5 sm:p-4 border border-slate-200 shadow-xs space-y-1 cursor-pointer hover:border-amber-400 active:scale-[0.98] transition-all"
                 >
-                  <div className="flex items-center justify-between text-slate-500 text-xs font-bold">
-                    <span>Active Flight Batches</span>
-                    <Calendar className="w-4 h-4 text-amber-600" />
+                  <div className="flex items-center justify-between text-slate-500 text-[11px] sm:text-xs font-bold">
+                    <span>Flight Batches</span>
+                    <Calendar className="w-4 h-4 text-amber-600 shrink-0" />
                   </div>
-                  <div className="text-2xl font-black text-[#08245F]">{batches.length}</div>
-                  <p className="text-[11px] text-slate-500">{seatsAvailable} of {totalSlots} seats open</p>
+                  <div className="text-xl sm:text-2xl font-black text-[#08245F]">{batches.length}</div>
+                  <p className="text-[10px] sm:text-[11px] text-slate-500 truncate">{seatsAvailable} of {totalSlots} seats open</p>
                 </div>
 
                 <div
                   onClick={() => setActiveTab('courses')}
-                  className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs space-y-1 cursor-pointer hover:border-red-400 transition-colors"
+                  className="bg-white rounded-2xl p-3.5 sm:p-4 border border-slate-200 shadow-xs space-y-1 cursor-pointer hover:border-red-400 active:scale-[0.98] transition-all"
                 >
-                  <div className="flex items-center justify-between text-slate-500 text-xs font-bold">
+                  <div className="flex items-center justify-between text-slate-500 text-[11px] sm:text-xs font-bold">
                     <span>Course Catalog</span>
-                    <Award className="w-4 h-4 text-[#d71920]" />
+                    <Award className="w-4 h-4 text-[#d71920] shrink-0" />
                   </div>
-                  <div className="text-2xl font-black text-[#08245F]">{courses.length}</div>
-                  <p className="text-[11px] text-slate-500">DGCA RPC & Technical Tracks</p>
+                  <div className="text-xl sm:text-2xl font-black text-[#08245F]">{courses.length}</div>
+                  <p className="text-[10px] sm:text-[11px] text-slate-500 truncate">DGCA RPC & Tech Tracks</p>
                 </div>
-              </div>
 
-              {/* Google Sheets & Email Automated Pipeline Status Bar */}
-              <div
-                onClick={() => setActiveTab('integrations')}
-                className="bg-gradient-to-r from-emerald-50 via-teal-50 to-sky-50 border border-emerald-200 rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs cursor-pointer hover:border-emerald-400 transition-colors"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 rounded-xl bg-emerald-600 text-white shrink-0">
-                    <FileSpreadsheet className="w-5 h-5" />
+                <div
+                  onClick={() => setActiveTab('gallery')}
+                  className="bg-white rounded-2xl p-3.5 sm:p-4 border border-slate-200 shadow-xs space-y-1 cursor-pointer hover:border-purple-400 active:scale-[0.98] transition-all col-span-2 sm:col-span-1"
+                >
+                  <div className="flex items-center justify-between text-slate-500 text-[11px] sm:text-xs font-bold">
+                    <span>Photo Gallery</span>
+                    <Images className="w-4 h-4 text-purple-600 shrink-0" />
                   </div>
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-[10px] font-black uppercase text-emerald-800 tracking-wider">
-                        Live Auto-Sync Active
-                      </span>
-                      <span className="text-[11px] font-bold text-slate-700">
-                        → dronetech@sece.ac.in
-                      </span>
-                    </div>
-                    <p className="text-xs font-black text-[#08245F] mt-0.5">
-                      {sheetsConfigured
-                        ? 'Google Sheets Webhook Connected · Every new enroll & enquiry is recorded live'
-                        : 'Google Sheets link ready to connect · Click to paste your Sheet Webhook URL'}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2 shrink-0">
-                  <span className={`text-[11px] font-extrabold px-3 py-1 rounded-full ${
-                    sheetsConfigured ? 'bg-emerald-200/80 text-emerald-900' : 'bg-amber-200/80 text-amber-900'
-                  }`}>
-                    {sheetsConfigured ? '✓ Connected' : 'Configure Sheet'}
-                  </span>
-                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                  <div className="text-xl sm:text-2xl font-black text-[#08245F]">{gallery.length}</div>
+                  <p className="text-[10px] sm:text-[11px] text-slate-500 truncate">Campus & Flight Photos</p>
                 </div>
               </div>
 
               {/* Technical Tracks Breakdown Mini Grid */}
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-5 space-y-3">
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-3.5 sm:p-5 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-xs font-black text-[#08245F] uppercase tracking-wide">
                       Applications by Specialization Track
                     </h3>
-                    <p className="text-[11px] text-slate-500">
+                    <p className="text-[11px] text-slate-500 hidden sm:block">
                       Click any track to filter the candidate management table directly.
                     </p>
                   </div>
@@ -911,20 +967,20 @@ export const AdminWebsite: React.FC = () => {
                       setActiveTab('enquiries');
                       setTrackFilter('all');
                     }}
-                    className="text-xs font-bold text-blue-700 hover:underline flex items-center gap-1 cursor-pointer"
+                    className="text-xs font-bold text-blue-700 hover:underline flex items-center gap-1 cursor-pointer p-1"
                   >
                     <span>View All</span>
                     <ChevronRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-1">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-2.5 pt-1">
                   <div
                     onClick={() => {
                       setActiveTab('enquiries');
                       setTrackFilter('dgca');
                     }}
-                    className="p-3 rounded-xl border border-indigo-200 bg-indigo-50/50 hover:bg-indigo-50 cursor-pointer transition-all"
+                    className="p-3 rounded-xl border border-indigo-200 bg-indigo-50/50 hover:bg-indigo-50 cursor-pointer transition-all active:scale-[0.98]"
                   >
                     <div className="text-base">🪪</div>
                     <div className="text-lg font-black text-indigo-950 mt-1">{dgcaCount}</div>
@@ -936,11 +992,11 @@ export const AdminWebsite: React.FC = () => {
                       setActiveTab('enquiries');
                       setTrackFilter('glider');
                     }}
-                    className="p-3 rounded-xl border border-blue-200 bg-blue-50/50 hover:bg-blue-50 cursor-pointer transition-all"
+                    className="p-3 rounded-xl border border-blue-200 bg-blue-50/50 hover:bg-blue-50 cursor-pointer transition-all active:scale-[0.98]"
                   >
                     <div className="text-base">🛩️</div>
                     <div className="text-lg font-black text-blue-950 mt-1">{gliderCount}</div>
-                    <div className="text-[10px] font-bold text-blue-700 uppercase leading-tight">Track 1 · Glider</div>
+                    <div className="text-[10px] font-bold text-blue-700 uppercase leading-tight">Glider Design</div>
                   </div>
 
                   <div
@@ -948,11 +1004,11 @@ export const AdminWebsite: React.FC = () => {
                       setActiveTab('enquiries');
                       setTrackFilter('drone-design');
                     }}
-                    className="p-3 rounded-xl border border-red-200 bg-red-50/50 hover:bg-red-50 cursor-pointer transition-all"
+                    className="p-3 rounded-xl border border-red-200 bg-red-50/50 hover:bg-red-50 cursor-pointer transition-all active:scale-[0.98]"
                   >
                     <div className="text-base">🚁</div>
                     <div className="text-lg font-black text-red-950 mt-1">{droneDesignCount}</div>
-                    <div className="text-[10px] font-bold text-red-700 uppercase leading-tight">Track 2 · Drone Dev</div>
+                    <div className="text-[10px] font-bold text-red-700 uppercase leading-tight">Drone Dev</div>
                   </div>
 
                   <div
@@ -960,73 +1016,41 @@ export const AdminWebsite: React.FC = () => {
                       setActiveTab('enquiries');
                       setTrackFilter('repair');
                     }}
-                    className="p-3 rounded-xl border border-amber-200 bg-amber-50/50 hover:bg-amber-50 cursor-pointer transition-all"
+                    className="p-3 rounded-xl border border-amber-200 bg-amber-50/50 hover:bg-amber-50 cursor-pointer transition-all active:scale-[0.98]"
                   >
                     <div className="text-base">🔧</div>
                     <div className="text-lg font-black text-amber-950 mt-1">{repairCount}</div>
-                    <div className="text-[10px] font-bold text-amber-700 uppercase leading-tight">Track 3 · Repair</div>
+                    <div className="text-[10px] font-bold text-amber-700 uppercase leading-tight">Repair & Maint</div>
                   </div>
 
                   <div
                     onClick={() => {
                       setActiveTab('enquiries');
-                      setTrackFilter('internship');
+                      setTrackFilter('solar-inspection');
                     }}
-                    className="p-3 rounded-xl border border-purple-200 bg-purple-50/50 hover:bg-purple-50 cursor-pointer transition-all"
+                    className="p-3 rounded-xl border border-amber-300 bg-amber-100/60 hover:bg-amber-100 cursor-pointer transition-all active:scale-[0.98] col-span-1"
                   >
-                    <div className="text-base">🎓</div>
-                    <div className="text-lg font-black text-purple-950 mt-1">{internshipCount}</div>
-                    <div className="text-[10px] font-bold text-purple-700 uppercase leading-tight">Track 4 · Internship</div>
+                    <div className="text-base">☀️</div>
+                    <div className="text-lg font-black text-amber-950 mt-1">{solarInspectionCount}</div>
+                    <div className="text-[10px] font-bold text-amber-900 uppercase leading-tight">Solar Inspection</div>
+                  </div>
+
+                  <div
+                    onClick={() => {
+                      setActiveTab('enquiries');
+                      setTrackFilter('wind-inspection');
+                    }}
+                    className="p-3 rounded-xl border border-sky-300 bg-sky-100/60 hover:bg-sky-100 cursor-pointer transition-all active:scale-[0.98] col-span-1"
+                  >
+                    <div className="text-base">💨</div>
+                    <div className="text-lg font-black text-sky-950 mt-1">{windInspectionCount}</div>
+                    <div className="text-[10px] font-bold text-sky-900 uppercase leading-tight">Wind Inspection</div>
                   </div>
                 </div>
               </div>
 
-              {/* Central Database Linkage & Two-Way Sync Banner */}
-              <div className="bg-gradient-to-r from-[#08245F] via-[#073B8F] to-[#08245F] rounded-2xl p-4 sm:p-5 text-white shadow-md border border-blue-900/60 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                <div className="flex items-start space-x-3.5">
-                  <div className="p-2.5 rounded-xl bg-[#FFB800]/20 border border-[#FFB800]/40 text-[#FFB800] shrink-0">
-                    <Database className="w-5 h-5" />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center space-x-2">
-                      <h3 className="text-sm font-black uppercase tracking-wide text-white">
-                        RPTO Central Database Linked & Active
-                      </h3>
-                      <span className="flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                        2-Way Live Sync
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-                      Every candidate submission on the public website saves to <code className="text-[#FFB800] bg-black/30 px-1.5 py-0.5 rounded font-mono text-[11px]">/api/enquiries</code> & the server database. Course fees, batch seat adjustments, and announcements edited here update live across the public site.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 self-end md:self-center shrink-0">
-                  <button
-                    type="button"
-                    onClick={handleManualSync}
-                    disabled={isRefreshing}
-                    className="cursor-pointer text-xs font-bold text-slate-900 bg-[#FFB800] hover:bg-[#FFB800] px-3.5 py-2 rounded-xl transition-all shadow-xs flex items-center gap-1.5"
-                  >
-                    <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-                    Sync Now
-                  </button>
-                  <a
-                    href="/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="cursor-pointer text-xs font-bold text-white bg-white/10 hover:bg-white/20 border border-white/20 px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5 text-cyan-300" />
-                    Open Live Site
-                  </a>
-                </div>
-              </div>
-
-              {/* Quick Table: Recent Candidate Inquiries */}
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-5 space-y-4">
+              {/* Quick Section: Recent Candidate Inquiries */}
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-3.5 sm:p-5 space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-black text-[#08245F] uppercase tracking-wide">
@@ -1039,13 +1063,90 @@ export const AdminWebsite: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setActiveTab('enquiries')}
-                    className="cursor-pointer text-xs font-bold text-blue-700 hover:underline flex items-center gap-1"
+                    className="cursor-pointer text-xs font-bold text-blue-700 hover:underline flex items-center gap-1 p-1"
                   >
-                    View All Enquiries <ChevronRight className="w-3.5 h-3.5" />
+                    <span>View All</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
 
-                <div className="overflow-x-auto">
+                {/* Mobile Card View (< md) */}
+                <div className="md:hidden space-y-3">
+                  {enquiries.slice(0, 5).map((enq) => {
+                    const badge = getEnquiryTrackBadge(enq);
+                    return (
+                      <div
+                        key={enq.id}
+                        className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2.5"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <h4 className="font-bold text-sm text-[#08245F]">{enq.fullName}</h4>
+                            <p className="text-[11px] text-slate-500">{enq.courseName}</p>
+                          </div>
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase shrink-0 ${
+                              enq.status === 'New'
+                                ? 'bg-blue-100 text-blue-800'
+                                : enq.status === 'Contacted'
+                                ? 'bg-amber-100 text-amber-800'
+                                : enq.status === 'Enrolled'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-slate-100 text-slate-800'
+                            }`}
+                          >
+                            {enq.status}
+                          </span>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded border inline-flex items-center gap-1 ${badge.bg}`}>
+                            <span>{badge.icon}</span>
+                            <span>{badge.shortLabel}</span>
+                          </span>
+                          <span className="text-[11px] text-slate-600 font-medium">📞 {enq.phone}</span>
+                          <span className="text-[10px] text-slate-400 ml-auto">{enq.createdAt}</span>
+                        </div>
+
+                        <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <a
+                              href={`tel:${enq.phone}`}
+                              className="p-2 text-slate-600 bg-white hover:bg-slate-100 rounded-lg border border-slate-200 min-h-[36px] min-w-[36px] flex items-center justify-center"
+                              title="Call"
+                            >
+                              <Phone className="w-3.5 h-3.5" />
+                            </a>
+                            <a
+                              href={getWhatsAppUrl(enq.phone, enq.fullName, enq.courseName)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="p-2 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg border border-emerald-200 min-h-[36px] min-w-[36px] flex items-center justify-center"
+                              title="WhatsApp"
+                            >
+                              <MessageSquare className="w-3.5 h-3.5" />
+                            </a>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedEnquiry(enq);
+                              setAdminNoteInput(enq.notes || '');
+                            }}
+                            className="cursor-pointer text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors min-h-[36px] flex items-center gap-1"
+                          >
+                            <span>Review Details</span>
+                            <ChevronRight className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Desktop/Tablet Table View (>= md) */}
+                <div className="hidden md:block overflow-x-auto">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
                       <tr className="border-b border-slate-200 text-slate-500 font-bold bg-slate-50">
@@ -1093,7 +1194,7 @@ export const AdminWebsite: React.FC = () => {
                                   setSelectedEnquiry(enq);
                                   setAdminNoteInput(enq.notes || '');
                                 }}
-                                className="cursor-pointer text-xs font-bold text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-md transition-colors"
+                                className="cursor-pointer text-xs font-bold text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded-md transition-colors"
                               >
                                 Review Details
                               </button>
@@ -1108,38 +1209,41 @@ export const AdminWebsite: React.FC = () => {
             </div>
           )}
 
-          {/* TAB 2: ENQUIRIES & ADMISSIONS */}
+          {/* ========================================================= */}
+          {/* TAB 2: ENQUIRIES & ADMISSIONS DESK */}
+          {/* ========================================================= */}
           {activeTab === 'enquiries' && (
             <div className="max-w-6xl mx-auto space-y-4">
+              {/* Header */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-xl font-black text-[#08245F] tracking-tight uppercase">
+                  <h2 className="text-lg sm:text-xl font-black text-[#08245F] tracking-tight uppercase">
                     Candidate Applications & Admissions Desk
                   </h2>
                   <p className="text-xs text-slate-500">
                     Manage enquiries, candidate contact status, and enrolled student records with live database synchronization.
                   </p>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 self-start sm:self-auto">
                   <button
                     type="button"
                     onClick={exportEnquiriesCSV}
-                    className="cursor-pointer text-xs font-bold text-[#08245F] bg-white hover:bg-slate-50 border border-slate-300 px-3 py-2 rounded-xl flex items-center gap-1.5 shadow-2xs transition-colors"
+                    className="cursor-pointer text-xs font-bold text-[#08245F] bg-white hover:bg-slate-50 border border-slate-300 px-3 py-2 rounded-xl flex items-center gap-1.5 shadow-2xs transition-colors min-h-[38px]"
                   >
                     <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-                    Export CSV
+                    <span>Export CSV</span>
                   </button>
                 </div>
               </div>
 
               {/* Top Track & Volume Summary Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
                 <div
                   onClick={() => {
                     setTrackFilter('all');
                     setStatusFilter('All');
                   }}
-                  className={`p-3 rounded-xl border transition-all cursor-pointer ${
+                  className={`p-3 rounded-xl border transition-all cursor-pointer active:scale-[0.98] ${
                     trackFilter === 'all'
                       ? 'bg-white border-[#08245F] shadow-xs ring-1 ring-[#08245F]'
                       : 'bg-white border-slate-200 hover:border-slate-300'
@@ -1147,97 +1251,115 @@ export const AdminWebsite: React.FC = () => {
                 >
                   <p className="text-[10px] font-bold text-slate-500 uppercase">Total Bookings</p>
                   <p className="text-xl font-black text-[#08245F] mt-0.5">{enquiries.length}</p>
-                  <p className="text-[11px] text-slate-500 mt-0.5">{newCount} pending response</p>
+                  <p className="text-[11px] text-slate-500 mt-0.5">{newCount} pending</p>
                 </div>
 
                 <div
                   onClick={() => setTrackFilter('solar-inspection')}
-                  className={`p-3 rounded-xl border transition-all cursor-pointer ${
+                  className={`p-3 rounded-xl border transition-all cursor-pointer active:scale-[0.98] ${
                     trackFilter === 'solar-inspection'
                       ? 'bg-amber-50 border-amber-600 shadow-xs ring-1 ring-amber-600'
                       : 'bg-white border-slate-200 hover:border-slate-300'
                   }`}
                 >
                   <p className="text-[10px] font-bold text-amber-700 uppercase flex items-center gap-1">
-                    <span>☀️</span> Solar Inspections
+                    <span>☀️</span> Solar PV
                   </p>
                   <p className="text-xl font-black text-amber-950 mt-0.5">{solarInspectionCount}</p>
-                  <p className="text-[11px] text-slate-500 mt-0.5">PV Plant Thermography</p>
+                  <p className="text-[11px] text-slate-500 mt-0.5 truncate">Thermography</p>
+                </div>
+
+                <div
+                  onClick={() => setTrackFilter('wind-inspection')}
+                  className={`p-3 rounded-xl border transition-all cursor-pointer active:scale-[0.98] ${
+                    trackFilter === 'wind-inspection'
+                      ? 'bg-sky-50 border-sky-600 shadow-xs ring-1 ring-sky-600'
+                      : 'bg-white border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <p className="text-[10px] font-bold text-sky-700 uppercase flex items-center gap-1">
+                    <span>💨</span> Wind Turbine
+                  </p>
+                  <p className="text-xl font-black text-sky-950 mt-0.5">{windInspectionCount}</p>
+                  <p className="text-[11px] text-slate-500 mt-0.5 truncate">Blade & Nacelle</p>
                 </div>
 
                 <div
                   onClick={() => setTrackFilter('dgca')}
-                  className={`p-3 rounded-xl border transition-all cursor-pointer ${
+                  className={`p-3 rounded-xl border transition-all cursor-pointer active:scale-[0.98] ${
                     trackFilter === 'dgca'
                       ? 'bg-indigo-50/50 border-indigo-600 shadow-xs ring-1 ring-indigo-600'
                       : 'bg-white border-slate-200 hover:border-slate-300'
                   }`}
                 >
                   <p className="text-[10px] font-bold text-indigo-700 uppercase flex items-center gap-1">
-                    <span>🪪</span> DGCA RPC Pilots
+                    <span>🪪</span> DGCA RPC
                   </p>
                   <p className="text-xl font-black text-indigo-950 mt-0.5">{dgcaCount}</p>
-                  <p className="text-[11px] text-slate-500 mt-0.5">Commercial 2-150kg</p>
+                  <p className="text-[11px] text-slate-500 mt-0.5 truncate">Small/Med Pilot</p>
                 </div>
 
                 <div
                   onClick={() => setTrackFilter('drone-design')}
-                  className={`p-3 rounded-xl border transition-all cursor-pointer ${
+                  className={`p-3 rounded-xl border transition-all cursor-pointer active:scale-[0.98] ${
                     trackFilter === 'drone-design' || trackFilter === 'glider' || trackFilter === 'repair'
                       ? 'bg-red-50/50 border-red-600 shadow-xs ring-1 ring-red-600'
                       : 'bg-white border-slate-200 hover:border-slate-300'
                   }`}
                 >
                   <p className="text-[10px] font-bold text-red-700 uppercase flex items-center gap-1">
-                    <span>🛠️</span> Tech Tracks (1-3)
+                    <span>🛠️</span> Tech Tracks
                   </p>
                   <p className="text-xl font-black text-[#08245F] mt-0.5">
                     {gliderCount + droneDesignCount + repairCount}
                   </p>
-                  <p className="text-[11px] text-slate-500 mt-0.5">Glider, Drone Dev, Repair</p>
+                  <p className="text-[11px] text-slate-500 mt-0.5 truncate">Tracks 1-3</p>
                 </div>
 
                 <div
                   onClick={() => setTrackFilter('internship')}
-                  className={`p-3 rounded-xl border transition-all cursor-pointer ${
+                  className={`p-3 rounded-xl border transition-all cursor-pointer active:scale-[0.98] col-span-2 sm:col-span-1 ${
                     trackFilter === 'internship'
                       ? 'bg-purple-50/50 border-purple-600 shadow-xs ring-1 ring-purple-600'
                       : 'bg-white border-slate-200 hover:border-slate-300'
                   }`}
                 >
                   <p className="text-[10px] font-bold text-purple-700 uppercase flex items-center gap-1">
-                    <span>🎓</span> Internships (2 Wks)
+                    <span>🎓</span> Internship
                   </p>
                   <p className="text-xl font-black text-purple-950 mt-0.5">{internshipCount}</p>
-                  <p className="text-[11px] text-slate-500 mt-0.5">Project & R&D cohort</p>
+                  <p className="text-[11px] text-slate-500 mt-0.5 truncate">2-Wk Cohorts</p>
                 </div>
               </div>
 
               {/* Filters & Search Bar */}
-              <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs space-y-3">
-                <div className="flex flex-col md:flex-row gap-3 items-center justify-between">
+              <div className="bg-white rounded-2xl p-3.5 sm:p-4 border border-slate-200 shadow-xs space-y-3">
+                <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+                  {/* Search box */}
                   <div className="relative w-full md:w-80">
                     <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search candidate, phone, message text..."
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-9 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-hidden focus:border-[#08245F] focus:bg-white transition-all"
+                      placeholder="Search name, phone, course..."
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-9 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#08245F] focus:bg-white transition-all min-h-[40px]"
                     />
                     {searchQuery && (
                       <button
                         type="button"
                         onClick={() => setSearchQuery('')}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-0.5"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-1"
+                        aria-label="Clear search"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
                     )}
                   </div>
 
-                  <div className="flex items-center space-x-1.5 overflow-x-auto w-full md:w-auto">
-                    <span className="text-[11px] font-bold text-slate-400 uppercase mr-1">Status:</span>
+                  {/* Status chips */}
+                  <div className="flex items-center space-x-1.5 overflow-x-auto no-scrollbar pb-1 md:pb-0">
+                    <span className="text-[11px] font-bold text-slate-400 uppercase mr-1 shrink-0">Status:</span>
                     {[
                       { id: 'All', label: 'All', count: enquiries.length },
                       { id: 'New', label: 'New', count: newCount },
@@ -1249,7 +1371,7 @@ export const AdminWebsite: React.FC = () => {
                         type="button"
                         key={st.id}
                         onClick={() => setStatusFilter(st.id)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shrink-0 cursor-pointer flex items-center gap-1 ${
+                        className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shrink-0 cursor-pointer flex items-center gap-1 min-h-[34px] ${
                           statusFilter === st.id
                             ? 'bg-[#08245F] text-white shadow-xs'
                             : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -1267,22 +1389,23 @@ export const AdminWebsite: React.FC = () => {
                 </div>
 
                 {/* Track Sub-Filters */}
-                <div className="pt-2 border-t border-slate-100 flex items-center gap-1.5 overflow-x-auto">
+                <div className="pt-2 border-t border-slate-100 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
                   <span className="text-[11px] font-bold text-slate-400 uppercase mr-1 shrink-0">Track:</span>
                   {[
-                    { id: 'all', label: `All Tracks (${enquiries.length})` },
-                    { id: 'solar-inspection', label: `☀️ Solar Inspections (${solarInspectionCount})` },
-                    { id: 'dgca', label: `🪪 DGCA Licenses (${dgcaCount})` },
-                    { id: 'glider', label: `🛩️ Glider Design (${gliderCount})` },
-                    { id: 'drone-design', label: `🚁 Drone Design (${droneDesignCount})` },
-                    { id: 'repair', label: `🔧 Repair & Maint (${repairCount})` },
-                    { id: 'internship', label: `🎓 2-Wk Internship (${internshipCount})` }
+                    { id: 'all', label: `All (${enquiries.length})` },
+                    { id: 'solar-inspection', label: `☀️ Solar (${solarInspectionCount})` },
+                    { id: 'wind-inspection', label: `💨 Wind (${windInspectionCount})` },
+                    { id: 'dgca', label: `🪪 DGCA (${dgcaCount})` },
+                    { id: 'glider', label: `🛩️ Glider (${gliderCount})` },
+                    { id: 'drone-design', label: `🚁 Design (${droneDesignCount})` },
+                    { id: 'repair', label: `🔧 Repair (${repairCount})` },
+                    { id: 'internship', label: `🎓 Internship (${internshipCount})` }
                   ].map((track) => (
                     <button
                       type="button"
                       key={track.id}
                       onClick={() => setTrackFilter(track.id as any)}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-colors shrink-0 cursor-pointer ${
+                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-colors shrink-0 cursor-pointer min-h-[32px] ${
                         trackFilter === track.id
                           ? 'bg-blue-900 text-white shadow-xs'
                           : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
@@ -1302,7 +1425,7 @@ export const AdminWebsite: React.FC = () => {
                       }}
                       className="ml-auto text-xs text-red-600 hover:underline font-bold shrink-0 cursor-pointer px-2"
                     >
-                      Reset Filters
+                      Reset
                     </button>
                   )}
                 </div>
@@ -1312,8 +1435,136 @@ export const AdminWebsite: React.FC = () => {
                 </div>
               </div>
 
-              {/* Table of Enquiries */}
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+              {/* CANDIDATE APPLICATIONS LIST: DUAL RESPONSIVE DISPLAY */}
+              {/* 1. Mobile Cards View (< md) */}
+              <div className="md:hidden space-y-3">
+                {filteredEnquiries.length === 0 ? (
+                  <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-400 text-xs font-semibold">
+                    No applications found matching your filters.
+                  </div>
+                ) : (
+                  filteredEnquiries.map((enq) => {
+                    const badge = getEnquiryTrackBadge(enq);
+                    return (
+                      <div
+                        key={enq.id}
+                        className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 space-y-3 hover:border-slate-300 transition-colors"
+                      >
+                        {/* Header: Name, Track & Status Selector */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <h3 className="font-black text-[#08245F] text-base">{enq.fullName}</h3>
+                            <div className="mt-1">
+                              <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md border inline-flex items-center gap-1 ${badge.bg}`}>
+                                <span>{badge.icon}</span>
+                                <span>{badge.label}</span>
+                              </span>
+                            </div>
+                          </div>
+
+                          <select
+                            value={enq.status}
+                            onChange={(e) => {
+                              updateEnquiryStatus(enq.id, e.target.value as Enquiry['status']);
+                            }}
+                            className={`text-xs font-extrabold px-2.5 py-1 rounded-lg border cursor-pointer focus:outline-none min-h-[34px] ${
+                              enq.status === 'New'
+                                ? 'bg-blue-50 text-blue-800 border-blue-200'
+                                : enq.status === 'Contacted'
+                                ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                : enq.status === 'Enrolled'
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                : 'bg-slate-50 text-slate-800 border-slate-200'
+                            }`}
+                          >
+                            <option value="New">New</option>
+                            <option value="Contacted">Contacted</option>
+                            <option value="Enrolled">Enrolled</option>
+                            <option value="Archived">Archived</option>
+                          </select>
+                        </div>
+
+                        {/* Course & Date Info */}
+                        <div className="bg-slate-50 rounded-xl p-2.5 text-xs space-y-1 border border-slate-100">
+                          <div className="font-bold text-slate-800">{enq.courseName}</div>
+                          <div className="flex items-center justify-between text-[11px] text-slate-500">
+                            <span>{enq.preferredBatch || 'Regular Batch'}</span>
+                            <span>{enq.createdAt}</span>
+                          </div>
+                        </div>
+
+                        {/* Message Preview */}
+                        {enq.message && (
+                          <p className="text-xs text-slate-600 italic line-clamp-2 bg-slate-50/50 p-2 rounded-lg border border-slate-100">
+                            "{enq.message}"
+                          </p>
+                        )}
+
+                        {/* Action Bar (One-Tap Call, WhatsApp, Email, Details, Delete) */}
+                        <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5">
+                            <a
+                              href={`tel:${enq.phone}`}
+                              className="p-2.5 text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-xl border border-blue-200 min-h-[40px] min-w-[40px] flex items-center justify-center transition-colors"
+                              title="Call"
+                            >
+                              <Phone className="w-4 h-4" />
+                            </a>
+
+                            <a
+                              href={getWhatsAppUrl(enq.phone, enq.fullName, enq.courseName)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="p-2.5 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-xl border border-emerald-200 min-h-[40px] min-w-[40px] flex items-center justify-center transition-colors"
+                              title="WhatsApp"
+                            >
+                              <MessageSquare className="w-4 h-4" />
+                            </a>
+
+                            <a
+                              href={`mailto:${enq.email}`}
+                              className="p-2.5 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-xl border border-indigo-200 min-h-[40px] min-w-[40px] flex items-center justify-center transition-colors"
+                              title="Email"
+                            >
+                              <Mail className="w-4 h-4" />
+                            </a>
+                          </div>
+
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedEnquiry(enq);
+                                setAdminNoteInput(enq.notes || '');
+                              }}
+                              className="cursor-pointer text-xs font-bold text-white bg-[#08245F] hover:bg-[#16357d] px-3 py-2 rounded-xl transition-colors min-h-[40px] flex items-center gap-1 shadow-xs"
+                            >
+                              <FileText className="w-3.5 h-3.5 text-[#FFB800]" />
+                              <span>Details</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (window.confirm(`Permanently remove application record from ${enq.fullName}?`)) {
+                                  deleteEnquiry(enq.id);
+                                }
+                              }}
+                              className="cursor-pointer p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* 2. Desktop/Tablet Table View (>= md) */}
+              <div className="hidden md:block bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
@@ -1330,22 +1581,7 @@ export const AdminWebsite: React.FC = () => {
                       {filteredEnquiries.length === 0 ? (
                         <tr>
                           <td colSpan={6} className="py-12 text-center text-slate-400 text-xs font-semibold">
-                            <div className="space-y-1">
-                              <p>No applications or messages found matching your criteria.</p>
-                              {(searchQuery || statusFilter !== 'All' || trackFilter !== 'all') && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setSearchQuery('');
-                                    setStatusFilter('All');
-                                    setTrackFilter('all');
-                                  }}
-                                  className="text-blue-700 font-bold hover:underline cursor-pointer"
-                                >
-                                  Clear all filters
-                                </button>
-                              )}
-                            </div>
+                            No applications or messages found matching your criteria.
                           </td>
                         </tr>
                       ) : (
@@ -1356,8 +1592,8 @@ export const AdminWebsite: React.FC = () => {
                             <tr key={enq.id} className="hover:bg-slate-50/80 transition-colors">
                               {/* Candidate & Track */}
                               <td className="py-3 px-4">
-                                <div className="font-black text-[#08245F] text-sm flex items-center gap-1.5">
-                                  <span>{enq.fullName}</span>
+                                <div className="font-black text-[#08245F] text-sm">
+                                  {enq.fullName}
                                 </div>
                                 <div className="mt-1">
                                   <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md border inline-flex items-center gap-1 ${badge.bg}`}>
@@ -1428,7 +1664,7 @@ export const AdminWebsite: React.FC = () => {
                                   onChange={(e) => {
                                     updateEnquiryStatus(enq.id, e.target.value as Enquiry['status']);
                                   }}
-                                  className={`text-xs font-extrabold px-2 py-0.5 rounded-lg border cursor-pointer focus:outline-hidden ${
+                                  className={`text-xs font-extrabold px-2 py-0.5 rounded-lg border cursor-pointer focus:outline-none ${
                                     enq.status === 'New'
                                       ? 'bg-blue-50 text-blue-800 border-blue-200'
                                       : enq.status === 'Contacted'
@@ -1469,9 +1705,7 @@ export const AdminWebsite: React.FC = () => {
                                   </a>
 
                                   <a
-                                    href={`https://wa.me/${enq.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
-                                      `Hello ${enq.fullName}, greetings from Sri Eshwar Drone Tech Pvt Ltd (DGCA RPTO). We received your application for ${enq.courseName}.`
-                                    )}`}
+                                    href={getWhatsAppUrl(enq.phone, enq.fullName, enq.courseName)}
                                     target="_blank"
                                     rel="noreferrer"
                                     className="p-1.5 text-emerald-700 hover:bg-emerald-50 rounded-lg border border-emerald-200 transition-colors"
@@ -1503,229 +1737,18 @@ export const AdminWebsite: React.FC = () => {
                 </div>
               </div>
 
-              {/* MODAL: Full Registration Message & Candidate Management Dialog */}
-              {selectedEnquiry && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-                  <div className="bg-white rounded-2xl max-w-xl w-full p-5 sm:p-6 shadow-2xl border border-slate-200 relative animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto space-y-4">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedEnquiry(null)}
-                      className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                        <span className={`text-xs font-black uppercase px-2.5 py-0.5 rounded-md border inline-flex items-center gap-1.5 ${getEnquiryTrackBadge(selectedEnquiry).bg}`}>
-                          <span>{getEnquiryTrackBadge(selectedEnquiry).icon}</span>
-                          <span>{getEnquiryTrackBadge(selectedEnquiry).label}</span>
-                        </span>
-                        <span className="text-[11px] font-bold text-slate-400">
-                          ID: {selectedEnquiry.id}
-                        </span>
-                        <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                          Synced with live DB
-                        </span>
-                      </div>
-
-                      <h3 className="text-xl font-black text-[#08245F]">
-                        {selectedEnquiry.fullName}
-                      </h3>
-                      <p className="text-xs text-slate-500 font-semibold">
-                        Registered on {selectedEnquiry.createdAt} for <span className="text-[#08245F] font-bold">{selectedEnquiry.courseName}</span>
-                      </p>
-                    </div>
-
-                    {/* Quick Communication Bar */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
-                      <a
-                        href={`tel:${selectedEnquiry.phone}`}
-                        className="p-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-800 flex items-center justify-center gap-2 transition-colors"
-                      >
-                        <Phone className="w-4 h-4 text-blue-600" />
-                        <span>{selectedEnquiry.phone}</span>
-                      </a>
-
-                      <a
-                        href={`https://wa.me/${selectedEnquiry.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
-                          `Hello ${selectedEnquiry.fullName}, greetings from Sri Eshwar Drone Tech Pvt Ltd (DGCA RPTO). We received your application for ${selectedEnquiry.courseName}.`
-                        )}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="p-2.5 rounded-xl border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-xs font-bold text-emerald-900 flex items-center justify-center gap-2 transition-colors"
-                      >
-                        <MessageSquare className="w-4 h-4 text-emerald-700" />
-                        <span>Send WhatsApp</span>
-                      </a>
-
-                      <a
-                        href={`mailto:${selectedEnquiry.email}`}
-                        className="p-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-800 flex items-center justify-center gap-2 transition-colors"
-                      >
-                        <Mail className="w-4 h-4 text-indigo-600" />
-                        <span>Email Candidate</span>
-                      </a>
-                    </div>
-
-                    {/* Program & Batch Info */}
-                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 grid grid-cols-2 gap-3 text-xs">
-                      <div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase">Selected Program</p>
-                        <p className="font-black text-[#08245F] mt-0.5">{selectedEnquiry.courseName}</p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase">Batch / Duration</p>
-                        <p className="font-black text-slate-700 mt-0.5">{selectedEnquiry.preferredBatch || 'Standard Batch'}</p>
-                      </div>
-                    </div>
-
-                    {/* Parsed Applicant Attributes if available */}
-                    {(() => {
-                      const details = parseApplicantDetails(selectedEnquiry.message);
-                      if (!details) return null;
-                      return (
-                        <div className="space-y-1.5">
-                          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                            Candidate Profile Details:
-                          </p>
-                          <div className="grid grid-cols-2 gap-2">
-                            {details.map((item, idx) => (
-                              <div key={idx} className="bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase block">{item.label}</span>
-                                <span className="font-semibold text-slate-800">{item.value}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })()}
-
-                    {/* Full Candidate Registration Message */}
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs font-black text-slate-700 uppercase tracking-wider block">
-                          Full Registration Notes & Inquiries
-                        </label>
-                        {selectedEnquiry.message && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              navigator.clipboard.writeText(selectedEnquiry.message || '');
-                              setCopiedId(selectedEnquiry.id);
-                              setTimeout(() => setCopiedId(null), 1500);
-                              showToast('Message copied to clipboard', 'info');
-                            }}
-                            className="text-[11px] text-blue-700 hover:underline font-bold flex items-center gap-1 cursor-pointer"
-                          >
-                            {copiedId === selectedEnquiry.id ? (
-                              <>
-                                <Check className="w-3 h-3 text-emerald-600" />
-                                <span className="text-emerald-600">Copied!</span>
-                              </>
-                            ) : (
-                              <>
-                                <Copy className="w-3 h-3" />
-                                <span>Copy Text</span>
-                              </>
-                            )}
-                          </button>
-                        )}
-                      </div>
-                      <div className="bg-slate-900 text-slate-100 p-3.5 rounded-xl font-mono text-xs leading-relaxed whitespace-pre-wrap max-h-40 overflow-y-auto border border-slate-800 shadow-inner">
-                        {selectedEnquiry.message || 'No additional message was provided by the applicant.'}
-                      </div>
-                    </div>
-
-                    {/* Admin Status & Notes Editor */}
-                    <div className="space-y-3 pt-2 border-t border-slate-100">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <label className="text-xs font-black text-slate-700 uppercase tracking-wider block">
-                          Application Status
-                        </label>
-                        <div className="flex items-center gap-1.5">
-                          {(['New', 'Contacted', 'Enrolled', 'Archived'] as const).map((st) => (
-                            <button
-                              type="button"
-                              key={st}
-                              onClick={() => {
-                                updateEnquiryStatus(selectedEnquiry.id, st, adminNoteInput);
-                                setSelectedEnquiry((prev) => (prev ? { ...prev, status: st } : null));
-                              }}
-                              className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
-                                selectedEnquiry.status === st
-                                  ? 'bg-[#08245F] text-white shadow-xs'
-                                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                              }`}
-                            >
-                              {st}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        <label className="text-xs font-bold text-slate-700 block">
-                          Internal Admin Notes (Coordinator Remarks)
-                        </label>
-                        <textarea
-                          rows={2}
-                          value={adminNoteInput}
-                          onChange={(e) => setAdminNoteInput(e.target.value)}
-                          placeholder="e.g. Called candidate on 10:30 AM, batch confirmed for next Monday cohort..."
-                          className="w-full text-xs font-medium p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between pt-2">
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              updateEnquiryStatus(selectedEnquiry.id, selectedEnquiry.status, adminNoteInput);
-                            }}
-                            className="px-4 py-2 text-xs font-black bg-blue-700 hover:bg-blue-800 text-white rounded-xl shadow-xs cursor-pointer flex items-center gap-1.5"
-                          >
-                            <Save className="w-3.5 h-3.5" />
-                            <span>Save Remarks</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (window.confirm(`Delete application for ${selectedEnquiry.fullName}?`)) {
-                                deleteEnquiry(selectedEnquiry.id);
-                                setSelectedEnquiry(null);
-                              }
-                            }}
-                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors cursor-pointer"
-                            title="Delete this application"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => setSelectedEnquiry(null)}
-                          className="px-4 py-2 text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer"
-                        >
-                          Close Viewer
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
+          {/* ========================================================= */}
           {/* TAB 3: COURSES & FEE MATRIX */}
+          {/* ========================================================= */}
           {activeTab === 'courses' && (
             <div className="max-w-6xl mx-auto space-y-4">
+              {/* Header */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-xl font-black text-[#08245F] tracking-tight uppercase">
+                  <h2 className="text-lg sm:text-xl font-black text-[#08245F] tracking-tight uppercase">
                     DGCA Course Catalog & Fee Matrix
                   </h2>
                   <p className="text-xs text-slate-500">
@@ -1738,21 +1761,21 @@ export const AdminWebsite: React.FC = () => {
                     type="text"
                     value={courseSearch}
                     onChange={(e) => setCourseSearch(e.target.value)}
-                    placeholder="Search courses or weight class..."
-                    className="w-full bg-white border border-slate-300 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-hidden focus:border-[#08245F]"
+                    placeholder="Search courses..."
+                    className="w-full bg-white border border-slate-300 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#08245F] min-h-[40px]"
                   />
                 </div>
               </div>
 
               {/* Courses Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
                 {filteredCourses.map((course) => {
                   const isEditing = editingCourse?.id === course.id;
 
                   return (
                     <div
                       key={course.id}
-                      className="bg-white rounded-2xl border border-slate-200 shadow-xs p-5 space-y-4 flex flex-col justify-between hover:border-slate-300 transition-colors"
+                      className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-5 space-y-4 flex flex-col justify-between hover:border-slate-300 transition-colors"
                     >
                       <div className="space-y-3">
                         <div className="flex items-start justify-between gap-2">
@@ -1765,7 +1788,7 @@ export const AdminWebsite: React.FC = () => {
                                 onChange={(e) =>
                                   setEditingCourse({ ...editingCourse, name: e.target.value })
                                 }
-                                className="font-black text-sm text-[#08245F] border border-slate-300 rounded-lg p-1.5 w-full"
+                                className="font-black text-sm text-[#08245F] border border-slate-300 rounded-lg p-2 w-full"
                               />
                             </div>
                           ) : (
@@ -1789,7 +1812,7 @@ export const AdminWebsite: React.FC = () => {
                                 onChange={(e) =>
                                   setEditingCourse({ ...editingCourse, price: parseInt(e.target.value) || 0 })
                                 }
-                                className="font-black text-sm text-[#08245F] border border-slate-300 rounded-lg p-1 w-full mt-0.5"
+                                className="font-black text-sm text-[#08245F] border border-slate-300 rounded-lg p-1.5 w-full mt-0.5"
                               />
                             ) : (
                               <span className="font-black text-base text-[#08245F]">
@@ -1806,7 +1829,7 @@ export const AdminWebsite: React.FC = () => {
                                 onChange={(e) =>
                                   setEditingCourse({ ...editingCourse, duration: e.target.value })
                                 }
-                                className="font-bold text-xs text-slate-800 border border-slate-300 rounded-lg p-1 w-full mt-0.5"
+                                className="font-bold text-xs text-slate-800 border border-slate-300 rounded-lg p-1.5 w-full mt-0.5"
                               />
                             ) : (
                               <span className="font-bold text-xs text-slate-700">{course.duration}</span>
@@ -1825,7 +1848,7 @@ export const AdminWebsite: React.FC = () => {
                                 onChange={(e) =>
                                   setEditingCourse({ ...editingCourse, weightClass: e.target.value })
                                 }
-                                className="font-bold text-xs text-slate-800 border border-slate-300 rounded-lg p-1 w-full mt-0.5"
+                                className="font-bold text-xs text-slate-800 border border-slate-300 rounded-lg p-1.5 w-full mt-0.5"
                               />
                             </div>
                             <div>
@@ -1837,7 +1860,7 @@ export const AdminWebsite: React.FC = () => {
                                   onChange={(e) =>
                                     setEditingCourse({ ...editingCourse, seatsLeft: parseInt(e.target.value) || 0 })
                                   }
-                                  className="w-14 text-xs font-bold border border-slate-300 rounded p-1"
+                                  className="w-16 text-xs font-bold border border-slate-300 rounded p-1.5"
                                 />
                                 <span>/</span>
                                 <input
@@ -1846,7 +1869,7 @@ export const AdminWebsite: React.FC = () => {
                                   onChange={(e) =>
                                     setEditingCourse({ ...editingCourse, totalSeats: parseInt(e.target.value) || 0 })
                                   }
-                                  className="w-14 text-xs font-bold border border-slate-300 rounded p-1"
+                                  className="w-16 text-xs font-bold border border-slate-300 rounded p-1.5"
                                 />
                               </div>
                             </div>
@@ -1888,7 +1911,7 @@ export const AdminWebsite: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => setEditingCourse(null)}
-                              className="cursor-pointer text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition-colors"
+                              className="cursor-pointer text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 px-3.5 py-2 rounded-xl transition-colors min-h-[38px]"
                             >
                               Cancel
                             </button>
@@ -1897,8 +1920,9 @@ export const AdminWebsite: React.FC = () => {
                               onClick={() => {
                                 updateCourse(editingCourse);
                                 setEditingCourse(null);
+                                showToast('Course details updated', 'success');
                               }}
-                              className="cursor-pointer text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-3.5 py-1.5 rounded-lg flex items-center gap-1 shadow-2xs transition-colors"
+                              className="cursor-pointer text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-2xs transition-colors min-h-[38px]"
                             >
                               <Save className="w-3.5 h-3.5" />
                               Save Changes
@@ -1908,7 +1932,7 @@ export const AdminWebsite: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => setEditingCourse({ ...course })}
-                            className="cursor-pointer text-xs font-bold text-[#08245F] bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors"
+                            className="cursor-pointer text-xs font-bold text-[#08245F] bg-slate-100 hover:bg-slate-200 px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-colors min-h-[38px]"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                             Edit Details & Fee
@@ -1922,12 +1946,14 @@ export const AdminWebsite: React.FC = () => {
             </div>
           )}
 
+          {/* ========================================================= */}
           {/* TAB 4: FLIGHT BATCHES */}
+          {/* ========================================================= */}
           {activeTab === 'batches' && (
             <div className="max-w-6xl mx-auto space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-xl font-black text-[#08245F] tracking-tight uppercase">
+                  <h2 className="text-lg sm:text-xl font-black text-[#08245F] tracking-tight uppercase">
                     Airfield Flight Batches & Capacity
                   </h2>
                   <p className="text-xs text-slate-500">
@@ -1937,18 +1963,18 @@ export const AdminWebsite: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowAddBatchModal(true)}
-                  className="cursor-pointer text-xs font-bold text-white bg-[#08245F] hover:bg-[#16357d] px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-2xs transition-colors self-start sm:self-auto"
+                  className="cursor-pointer text-xs font-bold text-white bg-[#08245F] hover:bg-[#16357d] px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow-2xs transition-colors self-start sm:self-auto min-h-[40px]"
                 >
                   <Plus className="w-4 h-4 text-[#FFB800]" />
-                  Schedule New Batch
+                  <span>Schedule New Batch</span>
                 </button>
               </div>
 
               {/* Add New Batch Modal */}
               {showAddBatchModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-                  <div className="bg-white rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-200 relative animate-in zoom-in-95 duration-200 space-y-4">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 relative animate-in zoom-in-95 duration-200 flex flex-col max-h-[90dvh] overflow-hidden">
+                    <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-white">
                       <div>
                         <h3 className="text-sm font-black text-[#08245F] uppercase">Schedule New Flight Batch</h3>
                         <p className="text-xs text-slate-500">Create a new training cohort linked to central database.</p>
@@ -1956,7 +1982,8 @@ export const AdminWebsite: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setShowAddBatchModal(false)}
-                        className="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100 cursor-pointer"
+                        className="text-slate-400 hover:text-slate-700 p-2 rounded-xl hover:bg-slate-100 cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center"
+                        aria-label="Close"
                       >
                         <X className="w-5 h-5" />
                       </button>
@@ -1987,8 +2014,9 @@ export const AdminWebsite: React.FC = () => {
                           status: 'Open',
                           badgeColor: 'bg-emerald-600'
                         });
+                        showToast('New flight batch scheduled', 'success');
                       }}
-                      className="space-y-3 text-xs"
+                      className="p-4 sm:p-6 overflow-y-auto space-y-3.5 text-xs flex-1"
                     >
                       <div>
                         <label className="block font-bold text-slate-700 mb-1 uppercase text-[10px]">Batch Title *</label>
@@ -1998,17 +2026,17 @@ export const AdminWebsite: React.FC = () => {
                           value={newBatchForm.name}
                           onChange={(e) => setNewBatchForm({ ...newBatchForm, name: e.target.value })}
                           placeholder="e.g. Small RPC Weekday Cohort #15"
-                          className="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs"
+                          className="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-xs min-h-[40px]"
                         />
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <label className="block font-bold text-slate-700 mb-1 uppercase text-[10px]">Schedule Type</label>
                           <select
                             value={newBatchForm.type}
                             onChange={(e) => setNewBatchForm({ ...newBatchForm, type: e.target.value as any })}
-                            className="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold"
+                            className="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-xs font-bold min-h-[40px]"
                           >
                             <option value="weekday">Weekday (Mon - Fri)</option>
                             <option value="weekend">Weekend (Sat - Sun)</option>
@@ -2022,12 +2050,12 @@ export const AdminWebsite: React.FC = () => {
                             value={newBatchForm.duration}
                             onChange={(e) => setNewBatchForm({ ...newBatchForm, duration: e.target.value })}
                             placeholder="e.g. 5 Days / 40 Hrs"
-                            className="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs"
+                            className="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-xs min-h-[40px]"
                           />
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <label className="block font-bold text-slate-700 mb-1 uppercase text-[10px]">Start Date *</label>
                           <input
@@ -2036,7 +2064,7 @@ export const AdminWebsite: React.FC = () => {
                             value={newBatchForm.startDate}
                             onChange={(e) => setNewBatchForm({ ...newBatchForm, startDate: e.target.value })}
                             placeholder="e.g. 14 Apr 2026"
-                            className="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs"
+                            className="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-xs min-h-[40px]"
                           />
                         </div>
                         <div>
@@ -2046,12 +2074,12 @@ export const AdminWebsite: React.FC = () => {
                             value={newBatchForm.endDate}
                             onChange={(e) => setNewBatchForm({ ...newBatchForm, endDate: e.target.value })}
                             placeholder="e.g. 18 Apr 2026"
-                            className="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs"
+                            className="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-xs min-h-[40px]"
                           />
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-3 gap-3">
+                      <div className="grid grid-cols-3 gap-2.5">
                         <div>
                           <label className="block font-bold text-slate-700 mb-1 uppercase text-[10px]">Total Seats</label>
                           <input
@@ -2062,7 +2090,7 @@ export const AdminWebsite: React.FC = () => {
                               const val = parseInt(e.target.value) || 1;
                               setNewBatchForm({ ...newBatchForm, seatsTotal: val, seatsLeft: val });
                             }}
-                            className="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold"
+                            className="w-full border border-slate-300 rounded-xl px-2.5 py-2 text-xs font-bold min-h-[40px]"
                           />
                         </div>
                         <div>
@@ -2072,7 +2100,7 @@ export const AdminWebsite: React.FC = () => {
                             min={0}
                             value={newBatchForm.seatsLeft}
                             onChange={(e) => setNewBatchForm({ ...newBatchForm, seatsLeft: parseInt(e.target.value) || 0 })}
-                            className="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold"
+                            className="w-full border border-slate-300 rounded-xl px-2.5 py-2 text-xs font-bold min-h-[40px]"
                           />
                         </div>
                         <div>
@@ -2080,7 +2108,7 @@ export const AdminWebsite: React.FC = () => {
                           <select
                             value={newBatchForm.status}
                             onChange={(e) => setNewBatchForm({ ...newBatchForm, status: e.target.value as any })}
-                            className="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold"
+                            className="w-full border border-slate-300 rounded-xl px-2 py-2 text-xs font-bold min-h-[40px]"
                           >
                             <option value="Open">Open</option>
                             <option value="Filling Fast">Filling Fast</option>
@@ -2093,13 +2121,13 @@ export const AdminWebsite: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => setShowAddBatchModal(false)}
-                          className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
+                          className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer min-h-[40px]"
                         >
                           Cancel
                         </button>
                         <button
                           type="submit"
-                          className="px-4 py-2 text-xs font-black text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-xs cursor-pointer flex items-center gap-1.5"
+                          className="px-4 py-2 text-xs font-black text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-xs cursor-pointer flex items-center gap-1.5 min-h-[40px]"
                         >
                           <Plus className="w-3.5 h-3.5" />
                           <span>Publish Batch</span>
@@ -2110,7 +2138,76 @@ export const AdminWebsite: React.FC = () => {
                 </div>
               )}
 
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+              {/* Batches Mobile Cards (< md) */}
+              <div className="md:hidden space-y-3">
+                {batches.map((batch) => {
+                  const fillRatio = batch.seatsTotal > 0 ? (batch.seatsTotal - batch.seatsLeft) / batch.seatsTotal : 0;
+                  return (
+                    <div
+                      key={batch.id}
+                      className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 space-y-3"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <h3 className="font-bold text-sm text-[#08245F]">{batch.name}</h3>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-bold text-[10px] capitalize">
+                              {batch.type}
+                            </span>
+                            <span className="text-[11px] text-slate-500 font-medium">{batch.startDate}</span>
+                          </div>
+                        </div>
+
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase shrink-0 ${
+                            batch.status === 'Filling Fast'
+                              ? 'bg-amber-100 text-amber-800'
+                              : batch.status === 'Open'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}
+                        >
+                          {batch.status}
+                        </span>
+                      </div>
+
+                      {/* Capacity progress */}
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-xs font-bold text-slate-700">
+                          <span>{batch.seatsLeft} of {batch.seatsTotal} seats open</span>
+                          <span className="text-slate-400 font-normal">{batch.duration}</span>
+                        </div>
+                        <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${
+                              batch.seatsLeft === 0
+                                ? 'bg-red-500'
+                                : batch.seatsLeft <= 3
+                                ? 'bg-amber-500'
+                                : 'bg-emerald-500'
+                            }`}
+                            style={{ width: `${Math.min(100, Math.round(fillRatio * 100))}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t border-slate-100 flex items-center justify-end">
+                        <button
+                          type="button"
+                          onClick={() => setEditingBatch({ ...batch })}
+                          className="cursor-pointer text-xs font-bold text-[#08245F] hover:text-blue-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition-colors min-h-[36px] flex items-center gap-1"
+                        >
+                          <Edit2 className="w-3 h-3" />
+                          <span>Edit Batch</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Batches Desktop/Tablet Table (>= md) */}
+              <div className="hidden md:block bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
@@ -2232,6 +2329,7 @@ export const AdminWebsite: React.FC = () => {
                                   onClick={() => {
                                     updateBatch(editingBatch);
                                     setEditingBatch(null);
+                                    showToast('Batch updated successfully', 'success');
                                   }}
                                   className="text-xs font-bold text-emerald-700 hover:text-emerald-900 bg-emerald-100 hover:bg-emerald-200 px-2.5 py-1 rounded-md cursor-pointer inline-flex items-center gap-1"
                                 >
@@ -2307,12 +2405,14 @@ export const AdminWebsite: React.FC = () => {
             </div>
           )}
 
+          {/* ========================================================= */}
           {/* TAB 5: NEWS & ANNOUNCEMENTS */}
+          {/* ========================================================= */}
           {activeTab === 'news' && (
             <div className="max-w-6xl mx-auto space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-xl font-black text-[#08245F] tracking-tight uppercase">
+                  <h2 className="text-lg sm:text-xl font-black text-[#08245F] tracking-tight uppercase">
                     RPTO News & Notice Board
                   </h2>
                   <p className="text-xs text-slate-500">
@@ -2322,10 +2422,10 @@ export const AdminWebsite: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowAddNews(true)}
-                  className="cursor-pointer text-xs font-bold text-white bg-[#08245F] hover:bg-[#16357d] px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-2xs transition-colors self-start sm:self-auto"
+                  className="cursor-pointer text-xs font-bold text-white bg-[#08245F] hover:bg-[#16357d] px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow-2xs transition-colors self-start sm:self-auto min-h-[40px]"
                 >
                   <Plus className="w-4 h-4 text-[#FFB800]" />
-                  New Announcement
+                  <span>New Announcement</span>
                 </button>
               </div>
 
@@ -2337,7 +2437,8 @@ export const AdminWebsite: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setShowAddNews(false)}
-                      className="text-slate-400 hover:text-slate-600 p-1"
+                      className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg cursor-pointer"
+                      aria-label="Close"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -2350,7 +2451,7 @@ export const AdminWebsite: React.FC = () => {
                         placeholder="Notice title or headline..."
                         value={newAnnouncement.title}
                         onChange={(e) => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })}
-                        className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2"
+                        className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2.5 min-h-[40px]"
                       />
                     </div>
                     <div>
@@ -2358,7 +2459,7 @@ export const AdminWebsite: React.FC = () => {
                       <select
                         value={newAnnouncement.category}
                         onChange={(e) => setNewAnnouncement({ ...newAnnouncement, category: e.target.value })}
-                        className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2 font-bold"
+                        className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2.5 font-bold min-h-[40px]"
                       >
                         <option value="DGCA Notice">DGCA Notice</option>
                         <option value="Admissions">Admissions</option>
@@ -2374,14 +2475,14 @@ export const AdminWebsite: React.FC = () => {
                       value={newAnnouncement.summary}
                       onChange={(e) => setNewAnnouncement({ ...newAnnouncement, summary: e.target.value })}
                       rows={2}
-                      className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2"
+                      className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2.5"
                     />
                   </div>
                   <div className="flex items-center justify-end space-x-2 pt-1">
                     <button
                       type="button"
                       onClick={() => setShowAddNews(false)}
-                      className="text-xs font-bold text-slate-500 px-3 py-1.5 hover:text-slate-700 cursor-pointer"
+                      className="text-xs font-bold text-slate-500 px-3.5 py-2 hover:text-slate-700 cursor-pointer min-h-[38px]"
                     >
                       Cancel
                     </button>
@@ -2400,11 +2501,12 @@ export const AdminWebsite: React.FC = () => {
                         });
                         setShowAddNews(false);
                         setNewAnnouncement({ title: '', category: 'DGCA Notice', summary: '' });
+                        showToast('Announcement published', 'success');
                       }}
-                      className="cursor-pointer text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-3.5 py-1.5 rounded-xl shadow-2xs flex items-center gap-1.5"
+                      className="cursor-pointer text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-xl shadow-2xs flex items-center gap-1.5 min-h-[38px]"
                     >
                       <Send className="w-3 h-3" />
-                      Publish
+                      <span>Publish</span>
                     </button>
                   </div>
                 </div>
@@ -2413,28 +2515,27 @@ export const AdminWebsite: React.FC = () => {
               {/* News List */}
               <div className="bg-white rounded-2xl border border-slate-200 shadow-xs divide-y divide-slate-100">
                 {news.map((item) => (
-                  <div key={item.id} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
-                    <div className="space-y-1 max-w-2xl">
+                  <div key={item.id} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors gap-3">
+                    <div className="space-y-1 max-w-2xl min-w-0">
                       <div className="flex items-center space-x-2">
-                        <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-blue-50 text-[#08245F] border border-blue-200">
+                        <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-blue-50 text-[#08245F] border border-blue-200 shrink-0">
                           {item.category}
                         </span>
-                        <span className="text-xs text-slate-400 font-medium">{item.date}</span>
+                        <span className="text-xs text-slate-400 font-medium truncate">{item.date}</span>
                       </div>
-                      <h4 className="text-xs font-bold text-slate-800">{item.title}</h4>
+                      <h4 className="text-xs font-bold text-slate-800 break-words">{item.title}</h4>
                       {item.summary && (
-                        <p className="text-[11px] text-slate-500 leading-relaxed">{item.summary}</p>
+                        <p className="text-[11px] text-slate-500 leading-relaxed break-words">{item.summary}</p>
                       )}
                     </div>
 
                     <button
                       type="button"
                       onClick={() => {
-                        if (window.confirm(`Delete announcement "${item.title}"?`)) {
-                          deleteNewsItem(item.id);
-                        }
+                        deleteNewsItem(item.id);
+                        showToast('Announcement removed', 'info');
                       }}
-                      className="cursor-pointer p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors ml-3"
+                      className="cursor-pointer p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors ml-2 shrink-0 min-h-[36px] min-w-[36px] flex items-center justify-center"
                       title="Delete Announcement"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -2445,173 +2546,563 @@ export const AdminWebsite: React.FC = () => {
             </div>
           )}
 
-          {/* 6. GOOGLE SHEETS & EMAIL INTEGRATION TAB */}
-          {activeTab === 'integrations' && (
-            <div className="max-w-5xl mx-auto space-y-6">
+          {/* ========================================================= */}
+          {/* TAB 6: PHOTO GALLERY MANAGEMENT */}
+          {/* ========================================================= */}
+          {activeTab === 'gallery' && (
+            <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
               {/* Header */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
-                      Automated Pipeline
-                    </span>
-                    <span className="text-xs text-slate-500 font-medium">
-                      Direct Email & Live Cloud Spreadsheet
-                    </span>
-                  </div>
-                  <h2 className="text-xl font-black text-[#08245F] tracking-tight uppercase">
-                    Google Sheets & Admissions Email Integration
+                  <h2 className="text-lg sm:text-xl font-black text-[#08245F] tracking-tight uppercase flex items-center gap-2">
+                    <Images className="w-5 h-5 text-[#FFB800]" />
+                    <span>Campus & Flight Photo Gallery Management</span>
                   </h2>
                   <p className="text-xs text-slate-500 font-medium">
-                    Whenever any candidate submits an enrollment or enquiry, it automatically forwards to Google Sheets and dispatches to dronetech@sece.ac.in.
+                    Add, edit, filter, and organize photos with title, subtitle, and description synchronized to the server database.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold">
+                    <Database className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Live Database Sync</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowAddGalleryModal(true)}
+                    className="cursor-pointer text-xs font-black text-[#08245F] bg-[#FFB800] hover:bg-[#E5A600] active:scale-98 px-4 py-2.5 rounded-xl shadow-xs flex items-center gap-2 min-h-[40px] uppercase tracking-wide transition-all"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add New Photo</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Category Filter Pills & Search Bar */}
+              <div className="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-xs space-y-3">
+                {/* Category Filter Pills */}
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                  {[
+                    { id: 'all', label: 'All Photos' },
+                    { id: 'Training', label: 'Training' },
+                    { id: 'Events', label: 'Events' },
+                    { id: 'Industrial', label: 'Industrial' },
+                    { id: 'Facilities', label: 'Facilities' }
+                  ].map((cat) => {
+                    const isSelected = galleryCategoryFilter === cat.id;
+                    const count = cat.id === 'all'
+                      ? gallery.length
+                      : gallery.filter((item) => {
+                          const c = (item.category || '').toLowerCase();
+                          const target = cat.id.toLowerCase();
+                          if (c === target) return true;
+                          const t = `${item.name} ${item.subtitle || ''} ${item.description || ''} ${item.stats || ''}`.toLowerCase();
+                          if (target === 'training') return /pilot|simulator|ground|flight|class|exam/i.test(t);
+                          if (target === 'events') return /event|ceremony|convocation|expo|showcase|wings/i.test(t);
+                          if (target === 'industrial') return /industrial|assembly|avionics|diagnostics|station|solar|sensor/i.test(t);
+                          if (target === 'facilities') return /airfield|runway|campus|headquarters|building/i.test(t);
+                          return false;
+                        }).length;
+
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => setGalleryCategoryFilter(cat.id)}
+                        className={`cursor-pointer px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 min-h-[34px] ${
+                          isSelected
+                            ? 'bg-[#08245F] text-white shadow-xs'
+                            : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100 hover:text-[#08245F]'
+                        }`}
+                      >
+                        <span>{cat.label}</span>
+                        <span
+                          className={`text-[10px] font-extrabold px-1.5 py-0.2 rounded-full ${
+                            isSelected ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+                          }`}
+                        >
+                          {count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Search Bar + Published Count */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-slate-100">
+                  <div className="relative flex-1 max-w-md">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      placeholder="Search photos by title, subtitle, category or description..."
+                      value={gallerySearch}
+                      onChange={(e) => setGallerySearch(e.target.value)}
+                      className="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 focus:outline-none transition-colors"
+                    />
+                    {gallerySearch && (
+                      <button
+                        type="button"
+                        onClick={() => setGallerySearch('')}
+                        className="cursor-pointer absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-xl">
+                      {gallery.length} Photos in Database
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Photo Cards Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {gallery
+                  .filter((item) => {
+                    // Category filter
+                    if (galleryCategoryFilter !== 'all') {
+                      const c = (item.category || '').toLowerCase();
+                      const target = galleryCategoryFilter.toLowerCase();
+                      let matches = false;
+                      if (c === target) matches = true;
+                      else {
+                        const t = `${item.name} ${item.subtitle || ''} ${item.description || ''} ${item.stats || ''}`.toLowerCase();
+                        if (target === 'training' && /pilot|simulator|ground|flight|class|exam/i.test(t)) matches = true;
+                        if (target === 'events' && /event|ceremony|convocation|expo|showcase|wings/i.test(t)) matches = true;
+                        if (target === 'industrial' && /industrial|assembly|avionics|diagnostics|station|solar|sensor/i.test(t)) matches = true;
+                        if (target === 'facilities' && /airfield|runway|campus|headquarters|building/i.test(t)) matches = true;
+                      }
+                      if (!matches) return false;
+                    }
+
+                    // Search filter
+                    if (gallerySearch.trim()) {
+                      const q = gallerySearch.toLowerCase();
+                      const text = `${item.name} ${item.subtitle || ''} ${item.description || ''} ${item.category || ''} ${item.stats || ''}`.toLowerCase();
+                      if (!text.includes(q)) return false;
+                    }
+
+                    return true;
+                  })
+                  .map((item) => {
+                    const itemCat = item.category || 'Facilities';
+                    const getBadgeStyle = (cat: string) => {
+                      switch (cat) {
+                        case 'Training':
+                          return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+                        case 'Events':
+                          return 'bg-amber-100 text-amber-800 border-amber-200';
+                        case 'Industrial':
+                          return 'bg-sky-100 text-sky-800 border-sky-200';
+                        case 'Facilities':
+                        default:
+                          return 'bg-purple-100 text-purple-800 border-purple-200';
+                      }
+                    };
+
+                    return (
+                      <div
+                        key={item.id}
+                        className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden flex flex-col justify-between hover:border-blue-300 hover:shadow-md transition-all group"
+                      >
+                        <div>
+                          {/* Image Preview Container - Locked 16:9 aspect ratio */}
+                          <div className="relative aspect-video w-full bg-slate-900 overflow-hidden" style={{ aspectRatio: '16 / 9' }}>
+                            <img
+                              src={item.image}
+                              alt={item.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              style={{ aspectRatio: '16 / 9' }}
+                              onError={(e) => {
+                                const target = e.currentTarget as HTMLImageElement;
+                                target.src = '/images/airfield.webp';
+                              }}
+                            />
+
+                            {/* Category Tag (Top Left) */}
+                            <span
+                              className={`absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider border shadow-2xs ${getBadgeStyle(
+                                itemCat
+                              )}`}
+                            >
+                              {itemCat}
+                            </span>
+
+                            {/* Stats Tag (Top Right) */}
+                            {item.stats && (
+                              <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-md bg-[#071D4A]/90 text-[#FFB800] text-[9px] font-black uppercase tracking-wider backdrop-blur-xs border border-white/10">
+                                {item.stats}
+                              </span>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={() => openLightbox(item.image, item.name, item.description)}
+                              className="cursor-pointer absolute bottom-2.5 right-2.5 px-2 py-1 rounded-lg bg-black/75 hover:bg-black text-white text-[10px] font-bold flex items-center gap-1 backdrop-blur-xs transition-colors"
+                            >
+                              <Eye className="w-3 h-3 text-[#FFB800]" />
+                              <span>Preview</span>
+                            </button>
+                          </div>
+
+                          {/* Text Content: Title, Subtitle, Description */}
+                          <div className="p-3.5 space-y-1.5">
+                            <div className="flex items-center justify-between gap-1">
+                              <h3 className="text-xs sm:text-sm font-black text-[#08245F] line-clamp-1">
+                                {item.name}
+                              </h3>
+                            </div>
+                            {item.subtitle && (
+                              <p className="text-[10px] sm:text-xs font-bold text-[#d71920] line-clamp-1">
+                                {item.subtitle}
+                              </p>
+                            )}
+                            {item.description && (
+                              <p className="text-[11px] text-slate-600 leading-relaxed line-clamp-2">
+                                {item.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Actions Bar */}
+                        <div className="px-3.5 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2">
+                          <span className="text-[10px] text-slate-400 font-mono truncate">
+                            ID: {item.id}
+                          </span>
+
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setEditingGalleryItem(item)}
+                              className="cursor-pointer text-xs font-bold text-[#08245F] hover:bg-blue-50 px-2.5 py-1.5 rounded-lg border border-slate-200 transition-colors flex items-center gap-1"
+                            >
+                              <Edit2 className="w-3 h-3 text-blue-600" />
+                              <span>Edit</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                deleteGalleryItem(item.id);
+                              }}
+                              className="cursor-pointer text-xs font-bold text-red-600 hover:bg-red-50 hover:text-red-700 p-1.5 rounded-lg border border-red-200 hover:border-red-300 transition-colors"
+                              title="Delete photo"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+
+              {gallery.length === 0 && (
+                <div className="bg-white rounded-2xl border border-dashed border-slate-300 p-8 text-center space-y-3">
+                  <Camera className="w-10 h-10 text-slate-300 mx-auto" />
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-700">No photos in the gallery yet</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">Click "Add New Photo" to publish photos to the public gallery.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddGalleryModal(true)}
+                    className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black text-[#08245F] bg-[#FFB800] hover:bg-[#E5A600]"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add First Photo</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ========================================================= */}
+          {/* TAB: RPC HOLDERS REGISTRY */}
+          {/* ========================================================= */}
+          {activeTab === 'rpc-holders' && <AdminRpcHoldersSection />}
+        </main>
+      </div>
+
+      {/* 4. MOBILE BOTTOM NAVIGATION BAR (FIXED FOR CONVENIENT THUMB ACCESS ON PHONES) */}
+      <nav aria-label="Mobile Bottom Bar" className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 px-1 py-1 flex items-center justify-around shadow-lg safe-area-pb overflow-x-auto">
+        {navTabs.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`flex-1 py-1.5 px-0.5 flex flex-col items-center justify-center gap-0.5 rounded-xl transition-all cursor-pointer relative min-h-[44px] ${
+                isActive
+                  ? 'text-[#08245F] font-black'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <div className="relative">
+                <Icon className={`w-4 h-4 ${isActive ? 'text-[#08245F] stroke-[2.5]' : 'text-slate-500'}`} />
+                {tab.id === 'enquiries' && newCount > 0 && (
+                  <span className="absolute -top-1 -right-2 w-3.5 h-3.5 bg-red-600 text-white rounded-full text-[9px] font-black flex items-center justify-center ring-2 ring-white">
+                    {newCount}
+                  </span>
+                )}
+              </div>
+              <span className={`text-[9px] leading-tight truncate max-w-[50px] ${isActive ? 'text-[#08245F] font-black' : 'text-slate-500'}`}>
+                {tab.id === 'enquiries'
+                  ? 'Admissions'
+                  : tab.id === 'courses'
+                  ? 'Courses'
+                  : tab.id === 'batches'
+                  ? 'Batches'
+                  : tab.id === 'rpc-holders'
+                  ? 'RPCs'
+                  : tab.id === 'gallery'
+                  ? 'Gallery'
+                  : tab.id === 'news'
+                  ? 'News'
+                  : 'Overview'}
+              </span>
+              {isActive && (
+                <span className="w-5 h-0.5 bg-[#08245F] rounded-full absolute bottom-0.5" />
+              )}
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* 5. CANDIDATE REGISTRATION DETAILS MODAL (ACCESSIBLE FROM ANY TAB) */}
+      {selectedEnquiry && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 relative animate-in zoom-in-95 duration-150 max-h-[85vh] sm:max-h-[88vh] flex flex-col overflow-hidden">
+            {/* Sticky Compact Modal Header */}
+            <div className="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-200 flex items-start justify-between gap-2.5 bg-white shrink-0">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-1.5 mb-0.5">
+                  <span className={`text-[9px] sm:text-[10px] font-black uppercase px-2 py-0.5 rounded border inline-flex items-center gap-1 ${getEnquiryTrackBadge(selectedEnquiry).bg}`}>
+                    <span>{getEnquiryTrackBadge(selectedEnquiry).icon}</span>
+                    <span className="truncate max-w-[170px]">{getEnquiryTrackBadge(selectedEnquiry).label}</span>
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-400">
+                    ID: {selectedEnquiry.id}
+                  </span>
+                </div>
+                <h3 className="text-base sm:text-lg font-black text-[#08245F] truncate">
+                  {selectedEnquiry.fullName}
+                </h3>
+                <p className="text-[11px] text-slate-500 font-medium truncate">
+                  {selectedEnquiry.createdAt} · <span className="text-[#08245F] font-bold">{selectedEnquiry.courseName}</span>
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedEnquiry(null)}
+                className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 bg-slate-50 transition-colors cursor-pointer shrink-0"
+                aria-label="Close dialog"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Scrollable Modal Body */}
+            <div className="p-3.5 sm:p-5 overflow-y-auto space-y-3 flex-1 text-xs">
+              {/* Quick Communication Bar (Compact 3-column row) */}
+              <div className="grid grid-cols-3 gap-2">
+                <a
+                  href={`tel:${selectedEnquiry.phone}`}
+                  className="py-2 px-1 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100 text-[11px] font-bold text-blue-900 flex items-center justify-center gap-1.5 transition-colors"
+                  title={`Call ${selectedEnquiry.phone}`}
+                >
+                  <Phone className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                  <span className="truncate">Call</span>
+                </a>
+
+                <a
+                  href={getWhatsAppUrl(selectedEnquiry.phone, selectedEnquiry.fullName, selectedEnquiry.courseName)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="py-2 px-1 rounded-xl border border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100 text-[11px] font-bold text-emerald-900 flex items-center justify-center gap-1.5 transition-colors"
+                  title="WhatsApp"
+                >
+                  <MessageSquare className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span className="truncate">WhatsApp</span>
+                </a>
+
+                <a
+                  href={`mailto:${selectedEnquiry.email}`}
+                  className="py-2 px-1 rounded-xl border border-indigo-200 bg-indigo-50/70 hover:bg-indigo-100 text-[11px] font-bold text-indigo-900 flex items-center justify-center gap-1.5 transition-colors"
+                  title={`Email ${selectedEnquiry.email}`}
+                >
+                  <Mail className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                  <span className="truncate">Email</span>
+                </a>
+              </div>
+
+              {/* Program & Batch Info (Compact) */}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 grid grid-cols-2 gap-2 text-xs">
+                <div className="min-w-0">
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Program</p>
+                  <p className="font-bold text-xs text-[#08245F] mt-0.5 truncate" title={selectedEnquiry.courseName}>
+                    {selectedEnquiry.courseName}
+                  </p>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Cohort / Batch</p>
+                  <p className="font-bold text-xs text-slate-700 mt-0.5 truncate" title={selectedEnquiry.preferredBatch || 'Standard Cohort'}>
+                    {selectedEnquiry.preferredBatch || 'Standard Cohort'}
                   </p>
                 </div>
               </div>
 
-              {/* CARD 1: OFFICIAL EMAIL RECIPIENT */}
-              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2.5 rounded-xl bg-blue-50 text-[#087FE5] border border-blue-100">
-                      <Mail className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-black uppercase text-slate-400 block tracking-wider">
-                        Official Admissions Destination
-                      </span>
-                      <h3 className="text-sm sm:text-base font-black text-[#08245F]">
-                        dronetech@sece.ac.in
-                      </h3>
-                    </div>
-                  </div>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Active & Configured</span>
-                  </span>
-                </div>
-                <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
-                  All candidate enrollment forms across the website (DGCA Courses, Technical Internships, Contact Desk, and Solar/Wind Audits) are formatted and addressed directly to <strong className="text-slate-900">dronetech@sece.ac.in</strong>. Applicants are also given a one-click mail client button to dispatch their application directly from their personal email inbox.
-                </p>
-              </div>
-
-              {/* CARD 2: GOOGLE SHEETS LIVE HOOK */}
-              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
-                      <FileSpreadsheet className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm sm:text-base font-black text-[#08245F]">
-                        Google Sheets Webhook URL
-                      </h3>
-                      <p className="text-xs text-slate-500">
-                        Paste your Google Sheet Webhook or Google Apps Script Web App URL below or in <code className="text-[11px] bg-slate-100 px-1 py-0.5 rounded font-mono">src/config/integrations.ts</code>.
-                      </p>
+              {/* Parsed Applicant Attributes if available */}
+              {(() => {
+                const details = parseApplicantDetails(selectedEnquiry.message);
+                if (!details) return null;
+                return (
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                      Profile Details:
+                    </p>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {details.map((item, idx) => (
+                        <div key={idx} className="bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs">
+                          <span className="text-[9px] font-bold text-slate-400 uppercase block truncate">{item.label}</span>
+                          <span className="font-semibold text-slate-800 text-[11px] block truncate">{item.value}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
-                    sheetsConfigured
-                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                      : 'bg-amber-50 text-amber-700 border border-amber-200'
-                  }`}>
-                    {sheetsConfigured ? '🟢 Connected' : '⚪ Waiting for Sheet URL'}
-                  </span>
-                </div>
+                );
+              })()}
 
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700 block">
-                    Google Apps Script Web App / Webhook Endpoint
-                  </label>
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <input
-                      type="url"
-                      placeholder="https://script.google.com/macros/s/AKfycb.../exec (or SheetDB/sheet.best URL)"
-                      value={sheetsUrlInput}
-                      onChange={(e) => setSheetsUrlInput(e.target.value)}
-                      className="flex-1 text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-[#087FE5] outline-none font-mono"
-                    />
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleSaveGoogleSheetsUrl(false)}
-                        disabled={isSavingSheetsUrl}
-                        className="cursor-pointer text-xs font-bold text-white bg-[#08245F] hover:bg-[#0057B8] px-4 py-2.5 rounded-xl transition-all shadow-xs flex items-center gap-1.5 whitespace-nowrap"
-                      >
-                        <Save className="w-3.5 h-3.5" />
-                        <span>{isSavingSheetsUrl ? 'Saving...' : 'Save URL'}</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleSaveGoogleSheetsUrl(true)}
-                        disabled={isTestingSync || !sheetsUrlInput.trim()}
-                        className="cursor-pointer text-xs font-bold text-emerald-800 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 px-4 py-2.5 rounded-xl transition-all shadow-xs flex items-center gap-1.5 whitespace-nowrap disabled:opacity-50"
-                      >
-                        <Send className="w-3.5 h-3.5" />
-                        <span>{isTestingSync ? 'Sending...' : 'Test Row Sync'}</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Test Result Message */}
-                {testSyncResult && (
-                  <div className={`p-3 rounded-xl border text-xs flex items-start gap-2 ${
-                    testSyncResult.synced
-                      ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                      : 'bg-amber-50 border-amber-200 text-amber-800'
-                  }`}>
-                    <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-bold">Sync Test Response:</p>
-                      <p className="font-mono text-[11px] mt-0.5">{testSyncResult.message}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* CARD 3: 1-MINUTE GOOGLE APPS SCRIPT SETUP GUIDE */}
-              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
+              {/* Candidate Registration Message Notes */}
+              <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Sparkles className="w-4 h-4 text-[#FFB800]" />
-                    <h3 className="text-xs sm:text-sm font-black text-[#08245F] uppercase tracking-wide">
-                      60-Second Google Apps Script Setup (Copy &amp; Paste)
-                    </h3>
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                    Registration Notes & Inquiries
+                  </label>
+                  {selectedEnquiry.message && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(selectedEnquiry.message || '');
+                        setCopiedId(selectedEnquiry.id);
+                        setTimeout(() => setCopiedId(null), 1500);
+                        showToast('Message copied to clipboard', 'info');
+                      }}
+                      className="text-[10px] text-blue-700 hover:underline font-bold flex items-center gap-1 cursor-pointer py-0.5"
+                    >
+                      {copiedId === selectedEnquiry.id ? (
+                        <>
+                          <Check className="w-3 h-3 text-emerald-600" />
+                          <span className="text-emerald-600">Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3 h-3" />
+                          <span>Copy</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+                <div className="bg-slate-900 text-slate-100 p-2.5 rounded-xl font-mono text-[11px] leading-relaxed whitespace-pre-wrap max-h-24 overflow-y-auto border border-slate-800 shadow-inner">
+                  {selectedEnquiry.message || 'No additional message was provided by the applicant.'}
+                </div>
+              </div>
+
+              {/* Admin Status & Notes Editor */}
+              <div className="space-y-2.5 pt-1 border-t border-slate-100">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                    Application Status
+                  </label>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {(['New', 'Contacted', 'Enrolled', 'Archived'] as const).map((st) => (
+                      <button
+                        type="button"
+                        key={st}
+                        onClick={() => {
+                          updateEnquiryStatus(selectedEnquiry.id, st, adminNoteInput);
+                          setSelectedEnquiry((prev) => (prev ? { ...prev, status: st } : null));
+                        }}
+                        className={`py-1.5 px-1 text-[11px] font-bold rounded-lg transition-colors cursor-pointer text-center truncate ${
+                          selectedEnquiry.status === st
+                            ? 'bg-[#08245F] text-white shadow-xs'
+                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
+                      >
+                        {st}
+                      </button>
+                    ))}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const scriptText = `function doPost(e) {\\n  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();\\n  if (sheet.getLastRow() === 0) {\\n    sheet.appendRow(["Time", "Ref ID", "Name", "Phone", "Email", "Course", "Batch", "Message", "Status", "Target Email"]);\\n  }\\n  var data = JSON.parse(e.postData.contents);\\n  sheet.appendRow([new Date(), data.id, data.fullName, data.phone, data.email, data.courseName, data.preferredBatch, data.message, data.status, "dronetech@sece.ac.in"]);\\n  return ContentService.createTextOutput(JSON.stringify({ status: "success" })).setMimeType(ContentService.MimeType.JSON);\\n}`;
-                      navigator.clipboard.writeText(scriptText);
-                      setCopiedScript(true);
-                      setTimeout(() => setCopiedScript(false), 2000);
-                      showToast('Google Apps Script copied to clipboard!', 'success');
-                    }}
-                    className="cursor-pointer text-xs font-bold text-[#08245F] hover:bg-slate-100 border border-slate-300 px-3 py-1.5 rounded-lg flex items-center gap-1.5"
-                  >
-                    {copiedScript ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedScript ? 'Copied!' : 'Copy Script Code'}</span>
-                  </button>
                 </div>
 
-                <div className="text-xs text-slate-600 space-y-2">
-                  <ol className="list-decimal list-inside space-y-1 leading-relaxed">
-                    <li>Create your Google Sheet at <strong>sheets.new</strong>.</li>
-                    <li>Click <strong>Extensions &gt; Apps Script</strong>.</li>
-                    <li>Paste the code snippet into the editor.</li>
-                    <li>Click <strong>Deploy &gt; New deployment</strong> &gt; Select type: <strong>Web App</strong>.</li>
-                    <li>Set <em>Execute as: "Me"</em> and <em>Who has access: "Anyone"</em>.</li>
-                    <li>Copy the generated <strong>Web app URL</strong> and paste it into the box above (or in <code className="font-mono bg-slate-100 px-1 py-0.5 rounded">src/config/integrations.ts</code>)!</li>
-                  </ol>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                    Coordinator Remarks (Internal)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={adminNoteInput}
+                    onChange={(e) => setAdminNoteInput(e.target.value)}
+                    placeholder="e.g. Called candidate on 10:30 AM, batch confirmed..."
+                    className="w-full text-xs font-medium p-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
                 </div>
               </div>
             </div>
-          )}
-        </main>
-      </div>
 
-      {/* FACTORY RESET CONFIRMATION MODAL */}
+            {/* Sticky Modal Footer (Compact) */}
+            <div className="px-3.5 py-2.5 sm:px-5 sm:py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between gap-2 shrink-0">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    updateEnquiryStatus(selectedEnquiry.id, selectedEnquiry.status, adminNoteInput);
+                    showToast('Admin notes updated in database', 'success');
+                  }}
+                  className="px-3.5 py-2 text-xs font-black bg-blue-700 hover:bg-blue-800 text-white rounded-xl shadow-xs cursor-pointer flex items-center gap-1.5"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>Save Remarks</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm(`Delete application for ${selectedEnquiry.fullName}?`)) {
+                      deleteEnquiry(selectedEnquiry.id);
+                      setSelectedEnquiry(null);
+                    }
+                  }}
+                  className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors cursor-pointer"
+                  title="Delete this application"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedEnquiry(null)}
+                className="px-3.5 py-2 text-xs font-bold bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-xl cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 6. FACTORY RESET CONFIRMATION MODAL */}
       {showResetConfirmModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
           <div className="bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4">
@@ -2633,7 +3124,7 @@ export const AdminWebsite: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowResetConfirmModal(false)}
-                className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
+                className="px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer min-h-[40px]"
               >
                 Cancel
               </button>
@@ -2644,12 +3135,442 @@ export const AdminWebsite: React.FC = () => {
                   setShowResetConfirmModal(false);
                   showToast('Database reset to defaults', 'info');
                 }}
-                className="px-4 py-2 text-xs font-black text-white bg-red-600 hover:bg-red-700 rounded-xl shadow-xs cursor-pointer flex items-center gap-1.5"
+                className="px-4 py-2.5 text-xs font-black text-white bg-red-600 hover:bg-red-700 rounded-xl shadow-xs cursor-pointer flex items-center gap-1.5 min-h-[40px]"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
-                Confirm Reset
+                <span>Confirm Reset</span>
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 7. ADD GALLERY PHOTO MODAL */}
+      {showAddGalleryModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4 my-8">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                  <Camera className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-[#08245F] uppercase">Add Photo to Gallery</h3>
+                  <p className="text-[11px] text-slate-500">Photo will appear live in the public Gallery tab</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddGalleryModal(false)}
+                className="cursor-pointer p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!newGalleryForm.image.trim()) {
+                  showToast('Please provide an image URL or upload a photo', 'error');
+                  return;
+                }
+                if (!newGalleryForm.name.trim()) {
+                  showToast('Please enter a photo title', 'error');
+                  return;
+                }
+                if (!newGalleryForm.subtitle.trim()) {
+                  showToast('Please enter a subtitle', 'error');
+                  return;
+                }
+                if (!newGalleryForm.description.trim()) {
+                  showToast('Please enter a description', 'error');
+                  return;
+                }
+
+                addGalleryItem({
+                  name: newGalleryForm.name.trim(),
+                  subtitle: newGalleryForm.subtitle.trim(),
+                  description: newGalleryForm.description.trim(),
+                  image: newGalleryForm.image.trim(),
+                  stats: newGalleryForm.stats.trim() || 'Photo',
+                  category: newGalleryForm.category || 'Training'
+                });
+
+                setNewGalleryForm({
+                  name: '',
+                  subtitle: '',
+                  description: '',
+                  image: '',
+                  stats: 'Campus Photo',
+                  category: 'Training'
+                });
+                setShowAddGalleryModal(false);
+              }}
+              className="space-y-3.5"
+            >
+              {/* Photo Upload & Preview */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-700 block">
+                  Photo (Image URL or Upload from Device) <span className="text-red-500">*</span>
+                </label>
+
+                {/* Live Preview - 16:9 Aspect Ratio */}
+                <div className="relative aspect-video w-full rounded-xl bg-slate-900 border border-slate-200 overflow-hidden flex items-center justify-center" style={{ aspectRatio: '16 / 9' }}>
+                  {newGalleryForm.image ? (
+                    <img
+                      src={newGalleryForm.image}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                      style={{ aspectRatio: '16 / 9' }}
+                      onError={(e) => {
+                        const target = e.currentTarget as HTMLImageElement;
+                        target.src = '/images/airfield.webp';
+                      }}
+                    />
+                  ) : (
+                    <div className="text-center p-4 text-slate-400 space-y-1">
+                      <ImageIcon className="w-8 h-8 mx-auto text-slate-500" />
+                      <p className="text-xs font-semibold">No photo selected</p>
+                      <p className="text-[10px] text-slate-500">Paste a link, choose a preset, or upload an image file</p>
+                    </div>
+                  )}
+                  {newGalleryForm.image && (
+                    <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/70 text-white text-[10px] font-mono">
+                      Preview Active
+                    </span>
+                  )}
+                </div>
+
+                {/* Input + File Upload */}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    required
+                    placeholder="https://... or /images/..."
+                    value={newGalleryForm.image}
+                    onChange={(e) => setNewGalleryForm({ ...newGalleryForm, image: e.target.value })}
+                    className="flex-1 px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 focus:outline-none"
+                  />
+                  <label className="cursor-pointer px-3 py-2 text-xs font-bold text-[#08245F] bg-blue-50 hover:bg-blue-100 rounded-xl border border-blue-200 flex items-center gap-1.5 shrink-0 transition-colors">
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Upload</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            const result = event.target?.result as string;
+                            if (result) {
+                              setNewGalleryForm(prev => ({ ...prev, image: result }));
+                              showToast('Image uploaded successfully', 'success');
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+
+                {/* Quick Presets */}
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                    Or select a campus drone preset:
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      { label: 'Airfield', url: '/images/airfield.webp' },
+                      { label: 'RPTO Campus', url: '/images/drone-infra-building.webp' },
+                      { label: 'Flight Simulators', url: '/images/simulator-zone.webp' },
+                      { label: 'Ground Class', url: '/images/ground-class.webp' },
+                      { label: 'Assembly Rig', url: '/images/drone-station.webp' },
+                      { label: 'Avionics Bay', url: '/images/drone-station-2.webp' },
+                      { label: 'Flight Ops', url: '/images/discussion-room.webp' },
+                      { label: 'Drone Fleet', url: '/images/drone-library.webp' }
+                    ].map((preset, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setNewGalleryForm(prev => ({ ...prev, image: preset.url }))}
+                        className="cursor-pointer text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-600 transition-colors border border-slate-200"
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Title */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700 block">
+                  Photo Title <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Kinathukadavu Airfield Flight Operations"
+                  value={newGalleryForm.name}
+                  onChange={(e) => setNewGalleryForm({ ...newGalleryForm, name: e.target.value })}
+                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+
+              {/* Subtitle */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700 block">
+                  Subtitle <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. 15+ Acres Approved Green Zone Airspace"
+                  value={newGalleryForm.subtitle}
+                  onChange={(e) => setNewGalleryForm({ ...newGalleryForm, subtitle: e.target.value })}
+                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+
+              {/* Description */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700 block">
+                  Description <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  required
+                  rows={3}
+                  placeholder="e.g. Dedicated private flying field in Kinathukadavu with uninterrupted Green Zone airspace, geo-fenced safety boundaries, and live telemetry instrumentation."
+                  value={newGalleryForm.description}
+                  onChange={(e) => setNewGalleryForm({ ...newGalleryForm, description: e.target.value })}
+                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 focus:outline-none leading-relaxed"
+                />
+              </div>
+
+              {/* Filter Category */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700 block">
+                  Category <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={newGalleryForm.category}
+                  onChange={(e) => setNewGalleryForm({ ...newGalleryForm, category: e.target.value })}
+                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 focus:outline-none font-semibold text-slate-800"
+                >
+                  <option value="Training">Training (Simulators, Pilot Training, Ground Class)</option>
+                  <option value="Events">Events (Convocations, Airshows, Drone Expos, Ceremonies)</option>
+                  <option value="Industrial">Industrial (Solar/Wind Inspection, Assembly & Avionics Bays)</option>
+                  <option value="Facilities">Facilities (Airfield, Runways, RPTO Campus, Flight Ops)</option>
+                </select>
+              </div>
+
+              {/* Tag / Badge */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700 block">
+                  Category Tag / Badge (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. 15+ Acres • Active Airfield"
+                  value={newGalleryForm.stats}
+                  onChange={(e) => setNewGalleryForm({ ...newGalleryForm, stats: e.target.value })}
+                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+
+              {/* Submit Buttons */}
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowAddGalleryModal(false)}
+                  className="cursor-pointer px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="cursor-pointer px-5 py-2.5 text-xs font-black text-[#08245F] bg-[#FFB800] hover:bg-[#E5A600] rounded-xl shadow-xs flex items-center gap-1.5 uppercase tracking-wide"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Publish to Gallery</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 8. EDIT GALLERY PHOTO MODAL */}
+      {editingGalleryItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4 my-8">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                  <Edit2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-[#08245F] uppercase">Edit Gallery Photo</h3>
+                  <p className="text-[11px] text-slate-500">Update photo details and description</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingGalleryItem(null)}
+                className="cursor-pointer p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!editingGalleryItem.name.trim() || !editingGalleryItem.image.trim()) {
+                  showToast('Photo and title are required', 'error');
+                  return;
+                }
+                updateGalleryItem(editingGalleryItem);
+                setEditingGalleryItem(null);
+              }}
+              className="space-y-3.5"
+            >
+              {/* Photo Preview & Edit */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-700 block">Photo</label>
+                <div className="relative aspect-video w-full rounded-xl bg-slate-900 border border-slate-200 overflow-hidden flex items-center justify-center" style={{ aspectRatio: '16 / 9' }}>
+                  <img
+                    src={editingGalleryItem.image}
+                    alt={editingGalleryItem.name}
+                    className="w-full h-full object-cover"
+                    style={{ aspectRatio: '16 / 9' }}
+                    onError={(e) => {
+                      const target = e.currentTarget as HTMLImageElement;
+                      target.src = '/images/airfield.webp';
+                    }}
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    required
+                    value={editingGalleryItem.image}
+                    onChange={(e) => setEditingGalleryItem({ ...editingGalleryItem, image: e.target.value })}
+                    className="flex-1 px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 focus:outline-none"
+                  />
+                  <label className="cursor-pointer px-3 py-2 text-xs font-bold text-[#08245F] bg-blue-50 hover:bg-blue-100 rounded-xl border border-blue-200 flex items-center gap-1.5 shrink-0 transition-colors">
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Upload</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            const result = event.target?.result as string;
+                            if (result) {
+                              setEditingGalleryItem(prev => prev ? ({ ...prev, image: result }) : null);
+                              showToast('Image uploaded successfully', 'success');
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {/* Title */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700 block">Title</label>
+                <input
+                  type="text"
+                  required
+                  value={editingGalleryItem.name}
+                  onChange={(e) => setEditingGalleryItem({ ...editingGalleryItem, name: e.target.value })}
+                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+
+              {/* Subtitle */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700 block">Subtitle</label>
+                <input
+                  type="text"
+                  required
+                  value={editingGalleryItem.subtitle || ''}
+                  onChange={(e) => setEditingGalleryItem({ ...editingGalleryItem, subtitle: e.target.value })}
+                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+
+              {/* Description */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700 block">Description</label>
+                <textarea
+                  required
+                  rows={3}
+                  value={editingGalleryItem.description || ''}
+                  onChange={(e) => setEditingGalleryItem({ ...editingGalleryItem, description: e.target.value })}
+                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 focus:outline-none leading-relaxed"
+                />
+              </div>
+
+              {/* Category */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700 block">
+                  Category <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={editingGalleryItem.category || 'Training'}
+                  onChange={(e) => setEditingGalleryItem({ ...editingGalleryItem, category: e.target.value })}
+                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 focus:outline-none font-semibold text-slate-800"
+                >
+                  <option value="Training">Training (Simulators, Pilot Training, Ground Class)</option>
+                  <option value="Events">Events (Convocations, Airshows, Drone Expos, Ceremonies)</option>
+                  <option value="Industrial">Industrial (Solar/Wind Inspection, Assembly & Avionics Bays)</option>
+                  <option value="Facilities">Facilities (Airfield, Runways, RPTO Campus, Flight Ops)</option>
+                </select>
+              </div>
+
+              {/* Tag */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700 block">Tag / Badge</label>
+                <input
+                  type="text"
+                  value={editingGalleryItem.stats || ''}
+                  onChange={(e) => setEditingGalleryItem({ ...editingGalleryItem, stats: e.target.value })}
+                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setEditingGalleryItem(null)}
+                  className="cursor-pointer px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="cursor-pointer px-5 py-2.5 text-xs font-black text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs flex items-center gap-1.5 uppercase tracking-wide"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>Save Changes</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

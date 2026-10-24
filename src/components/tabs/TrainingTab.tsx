@@ -19,7 +19,8 @@ import {
   GraduationCap,
   Play,
   Pause,
-  Maximize2
+  Maximize2,
+  Award
 } from 'lucide-react';
 import { INTEGRATIONS_CONFIG, createAdmissionsMailtoUrl } from '../../config/integrations';
 
@@ -173,7 +174,7 @@ const TrackSlideshow: React.FC<{
 };
 
 export const TrainingTab: React.FC = () => {
-  const { addEnquiry, setActiveTab } = useApp();
+  const { addEnquiry, setActiveTab, rpcHolders } = useApp();
 
   const [activeCategory, setActiveCategory] = useState<string>('all');
 
@@ -346,7 +347,7 @@ export const TrainingTab: React.FC = () => {
       number: '4',
       title: 'Drone Technology Internships',
       iconEmoji: '🎓',
-      subtitle: 'Gain real-world experience through project-based UAV internships.',
+      subtitle: 'Project-based UAV technical internship with flight and R&D exposure.',
       // Explicitly removed 1 Month and 3 Months as requested:
       duration: '2 Weeks',
       mode: 'On-site / Project Based',
@@ -734,6 +735,30 @@ Candidate Message: ${applicantNote.trim() || 'Interested in attending this upcom
                 </div>
               </div>
             ))}
+        </div>
+
+        {/* ================= DGCA RPC HOLDERS REGISTRY SHOWCASE ================= */}
+        <div className="bg-gradient-to-r from-[#08245F] via-[#0B3388] to-[#071D4A] rounded-2xl p-5 sm:p-6 text-white shadow-lg border border-sky-400/20 flex flex-col md:flex-row items-center justify-between gap-5">
+          <div className="space-y-1.5 text-center md:text-left">
+            <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-black bg-amber-400/20 text-[#FFB800] border border-amber-400/30">
+              <Award className="w-3.5 h-3.5" />
+              <span>OFFICIAL PILOT REGISTRY ({rpcHolders.length} CERTIFIED PILOTS)</span>
+            </div>
+            <h3 className="text-base sm:text-lg font-black uppercase tracking-wide text-white">
+              DGCA Remote Pilot Certificate (RPC) Holders Registry
+            </h3>
+            <p className="text-xs text-sky-100/90 max-w-2xl leading-relaxed">
+              Explore the complete directory of certified commercial UAV pilots who successfully cleared DGCA practical flight assessments at our Kinathukadavu Airfield campus. Verify serial numbers, certificate IDs, and 10-year pilot credentials in real time.
+            </p>
+          </div>
+
+          <button
+            onClick={() => setActiveTab('rpc-holders')}
+            className="cursor-pointer px-5 py-2.5 rounded-xl bg-[#FFB800] hover:bg-[#E5A600] active:scale-98 text-[#08245F] font-black text-xs uppercase tracking-wider transition-all shadow-md flex items-center gap-1.5 shrink-0"
+          >
+            <span>View Full RPC Holders List</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
 
         {/* ================= BOTTOM FACILITY & HIGHLIGHTS FOOTER ================= */}

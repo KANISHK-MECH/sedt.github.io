@@ -1,4 +1,17 @@
-import { Course, Batch, NewsItem, Instructor, Facility, InspectionCard, Enquiry } from '../types';
+import { Course, Batch, NewsItem, Instructor, Facility, InspectionCard, Enquiry, RpcHolder } from '../types';
+import { INITIAL_RPC_HOLDERS } from './rpcHoldersData';
+export { INITIAL_RPC_HOLDERS };
+import windBladeErosionImg from '../assets/images/regenerated_image_1791793784107.webp';
+import windLightningReceptorImg from '../assets/images/regenerated_image_1791793780339.webp';
+import windNacelleThermalImg from '../assets/images/regenerated_image_1791793774311.webp';
+
+// Preload high-priority inspection images into browser cache immediately
+if (typeof window !== 'undefined') {
+  [windBladeErosionImg, windLightningReceptorImg, windNacelleThermalImg].forEach((src) => {
+    const img = new Image();
+    img.src = src;
+  });
+}
 
 export const INITIAL_COURSES: Course[] = [
   {
@@ -15,7 +28,7 @@ export const INITIAL_COURSES: Course[] = [
     description: 'The foundational commercial drone pilot license certified by the Directorate General of Civil Aviation (DGCA). Covers micro to small category UAVs (up to 25 kg), flight mechanics, airspace management, and mission planning.',
     seatsLeft: 4,
     totalSeats: 12,
-    objectFit: 'fill',
+    objectFit: 'cover',
     highlights: [
       '5 Days Intensive DGCA Syllabus',
       'Dual-Control Simulator & Airfield Training',
@@ -51,7 +64,7 @@ export const INITIAL_COURSES: Course[] = [
     description: 'Comprehensive DGCA certification for operating heavy-lift and agricultural drones (25 kg to 150 kg). Training includes automated precision spraying calibrations, radar obstacle avoidance, and battery swarm logistics.',
     seatsLeft: 3,
     totalSeats: 10,
-    objectFit: 'fill',
+    objectFit: 'contain',
     highlights: [
       'Heavy Agri Sprayer (10L–30L Payload) Flight Practice',
       'Terrain Following Radar & Swath Calibration',
@@ -87,7 +100,7 @@ export const INITIAL_COURSES: Course[] = [
     description: 'Accelerated 3-day conversion program for pilots who already possess basic UAV training or micro category credentials, fast-tracking to a full Small Category DGCA commercial license.',
     seatsLeft: 6,
     totalSeats: 12,
-    objectFit: 'fill',
+    objectFit: 'cover',
     highlights: [
       '3-Day Fast-Track Modular Schedule',
       'Targeted Heavy Payload Simulator Drills',
@@ -119,7 +132,7 @@ export const INITIAL_COURSES: Course[] = [
     description: 'Specialized 3-day bridge training designed for certified Small Category pilots wishing to command medium category UAVs (25kg - 150kg) for agribusiness and infrastructure contracts.',
     seatsLeft: 5,
     totalSeats: 10,
-    objectFit: 'fill',
+    objectFit: 'cover',
     highlights: [
       '3 Days Targeted Field Flight on Heavy Hexacopters',
       'Agri Spraying & Liquid Slosh Dynamics Management',
@@ -150,12 +163,11 @@ export const INITIAL_COURSES: Course[] = [
     description: 'The premier career launchpad at Sri Eshwar Drone Tech. In 7 intensive days, obtain dual DGCA Remote Pilot Certificates for both Small (2–25 kg) and Medium (25–150 kg) categories. Save ₹8,000+ with bundled training, simulator access, and industrial field attachments.',
     seatsLeft: 2,
     totalSeats: 8,
-    objectFit: 'fill',
+    objectFit: 'cover',
     highlights: [
       'Dual DGCA Pilot Licenses in One Program',
       'Certified for Surveying, Mapping & Agri Spraying',
       'Unlimited Simulator Flight Lab Access',
-      'Free Industrial Thermography & GIS Overview Module',
       'Priority Placement Assistance with Drone Ecosystem Partners',
       'Includes Drone Pilot Kit & Logbook'
     ],
@@ -281,14 +293,14 @@ export const INSTRUCTORS: Instructor[] = [
     experience: '10+ Years Aerospace & UAV',
     flightHours: 2800,
     phone: '+91 98947 43267',
-    specialization: 'Aviation Safety, DGCA Pilot Flight Training & Testing',
+    specialization: 'Small, Medium Class Instructor (2- 150kg)',
     image: '/images/Mr.E.Venugopal.webp',
     imagePosition: 'top',
-    bio: 'Chief Instructor at Sri Eshwar Drone Tech, supervising remote pilot flight training, simulator instruction, DGCA examination evaluations, and airworthiness safety.'
+    bio: 'Chief Instructor & Small, Medium Class Trainer at Sri Eshwar Drone Tech, supervising remote pilot flight training, simulator instruction, DGCA examination evaluations, and airworthiness safety.'
   },
   {
     id: 'inst-3',
-    name: 'Dr. S. Sampath\nKumar',
+    name: 'Dr. S. Sampath Kumar',
     role: 'Instructor',
     dgcaNumber: 'Sri Eshwar Drone Tech',
     experience: '8+ Years UAV & Flight Systems',
@@ -319,6 +331,7 @@ export const FACILITIES: Facility[] = [
     subtitle: '15+ Acres Approved Green Zone Airspace',
     description: 'Dedicated private flying field in Kinathukadavu, Coimbatore, with uninterrupted Green Zone airspace, geo-fenced safety boundaries, calibrated helipads, and full weather telemetry instrumentation.',
     image: '/images/airfield.webp',
+    category: 'Facilities',
     stats: '15+ Acres • Active Airfield',
     highlights: [
       'Dual active paved runways & soft-landing turf',
@@ -333,6 +346,7 @@ export const FACILITIES: Facility[] = [
     subtitle: 'Signature Multi-Storey Aviation & Flight Center',
     description: 'Modern multi-storey headquarters facility housing DGCA administration, academic faculty offices, trainee lounge, and direct access to 15+ acres of certified training grounds.',
     image: '/images/drone-infra-building.webp',
+    category: 'Facilities',
     stats: 'Multi-Storey • DGCA Center',
     highlights: [
       'Integrated DGCA registration & compliance desk',
@@ -347,6 +361,7 @@ export const FACILITIES: Facility[] = [
     subtitle: 'Dual-Seat Digital Flight Simulator Stations',
     description: 'Advanced computer flight simulator laboratory equipped with RealFlight & custom PX4 cockpits simulating Tamil Nadu topography, high gusts, emergency battery drops, and motor failure recoveries.',
     image: '/images/simulator-zone.webp',
+    category: 'Training',
     stats: '12 Simulator Stations • VR Ready',
     highlights: [
       'Exact transmitter mapping with dual-trainer link',
@@ -361,6 +376,7 @@ export const FACILITIES: Facility[] = [
     subtitle: 'Interactive Aviation Theory Classroom',
     description: 'Air-conditioned digital classroom with high-resolution projection, interactive 3D aerodynamics demonstrations, Digital Sky portal tutorials, and DGCA question bank mock assessment stations.',
     image: '/images/ground-class.webp',
+    category: 'Training',
     stats: '40 Seat Capacity • Smart AV',
     highlights: [
       'Interactive 3D airspace map visualizations',
@@ -375,6 +391,7 @@ export const FACILITIES: Facility[] = [
     subtitle: 'Hardware Assembly, Propeller Balancing & Test Bench',
     description: 'Industrial assembly workbench area where trainees gain hands-on experience assembling airframes, balancing carbon fiber propellers, and testing brushless propulsion systems.',
     image: '/images/drone-station.webp',
+    category: 'Industrial',
     stats: 'Industrial Lab • Multirotor Rig',
     highlights: [
       'Heavy multirotor carbon-fiber chassis assembly jigs',
@@ -389,6 +406,7 @@ export const FACILITIES: Facility[] = [
     subtitle: 'Electronics, Telemetry & LiPo Battery Safety Bay',
     description: 'Specialized electronics repair and diagnostics workbench equipped with oscilloscopes, spectrum analyzers, smart multi-channel LiPo balance charging bays, and payload integration rigs.',
     image: '/images/drone-station-2.webp',
+    category: 'Industrial',
     stats: 'Avionics Lab • LiPo Bunkers',
     highlights: [
       'Digital oscilloscopes & RF spectrum analyzers',
@@ -403,6 +421,7 @@ export const FACILITIES: Facility[] = [
     subtitle: 'Mission Planning & Post-Flight Debriefing Suite',
     description: 'Dedicated flight crew discussion room designed for pre-flight weather assessments, NOTAM analysis, emergency contingency reviews, and mission route deconfliction.',
     image: '/images/discussion-room.webp',
+    category: 'Training',
     stats: 'Briefing Suite • Mission Control',
     highlights: [
       'Interactive flight planning digital display screens',
@@ -417,6 +436,7 @@ export const FACILITIES: Facility[] = [
     subtitle: 'Comprehensive UAV Fleet & Component Archive',
     description: 'Dedicated technology archive featuring a wide spectrum of multirotors, agricultural sprayers, survey sensors, thermal cameras, and technical manuals for hands-on exploration.',
     image: '/images/drone-library.webp',
+    category: 'Industrial',
     stats: 'Research Hub • Fleet Archive',
     highlights: [
       'Showcase of diverse commercial UAV models & payloads',
@@ -424,8 +444,38 @@ export const FACILITIES: Facility[] = [
       'Multispectral, LiDAR & radiometric thermal sensors',
       'Aviation reference library & DGCA manuals'
     ]
+  },
+  {
+    id: 'event-1',
+    name: 'DGCA Remote Pilot Wings & License Convocation Ceremony',
+    subtitle: 'Official Wings Badge & Digital Sky Certification Distribution',
+    description: 'Graduating remote pilot cohort ceremony awarding official DGCA certification with chief flight instructors, DGCA examiners, and industrial UAV placement partners.',
+    image: '/images/ground-class.webp',
+    category: 'Events',
+    stats: 'Annual Convocation • Batch 24',
+    highlights: [
+      'Official DGCA Wings badge conferment',
+      'Trainee solo flight showcase & certificate handover',
+      'Industry placement recruiter interaction'
+    ]
+  },
+  {
+    id: 'event-2',
+    name: 'Tamil Nadu Drone Tech Expo & Airfield Flight Showcase',
+    subtitle: 'Precision Flight Formations & Real-Time Aerial Survey Demo',
+    description: 'Live field demonstrations featuring automated waypoint mapping, precision agricultural spraying, and high-resolution thermal solar panel inspection over Kinathukadavu airfield.',
+    image: '/images/airfield.webp',
+    category: 'Events',
+    stats: 'Live Expo • Flight Demonstrations',
+    highlights: [
+      'Live telemetry broadcast on ground control station',
+      'Precision thermal sensor payload test runs',
+      'Multi-drone obstacle avoidance maneuvers'
+    ]
   }
 ];
+
+export const INITIAL_GALLERY = FACILITIES;
 
 export const SOLAR_INSPECTIONS: InspectionCard[] = [
   {
@@ -469,7 +519,7 @@ export const WIND_INSPECTIONS: InspectionCard[] = [
     id: 'wind-1',
     title: 'Blade Leading Edge Erosion Audit',
     sector: 'wind',
-    image: '/images/airfield.png',
+    image: windBladeErosionImg,
     faultType: 'Category 3 Leading Edge Pitting & Delamination',
     resolution: '100MP High-Magnification Zoom & Thermal',
     efficiencyImpact: '+4.8% AEP (Annual Energy Production)',
@@ -480,7 +530,7 @@ export const WIND_INSPECTIONS: InspectionCard[] = [
     id: 'wind-2',
     title: 'Lightning Receptor & Conductor Continuity',
     sector: 'wind',
-    image: 'https://images.unsplash.com/photo-1548337138-e87d889cc369?auto=format&fit=crop&w=700&q=80',
+    image: windLightningReceptorImg,
     faultType: 'Lightning Strike Carbonization & Surface Rupture',
     resolution: 'Thermal Gradient & Ultra-HD Visual',
     efficiencyImpact: 'Catastrophic Delamination Prevention',
@@ -491,7 +541,7 @@ export const WIND_INSPECTIONS: InspectionCard[] = [
     id: 'wind-3',
     title: 'Nacelle & Yaw Mechanism Thermal Survey',
     sector: 'wind',
-    image: 'https://images.unsplash.com/photo-1498084393753-b411b2d26b34?auto=format&fit=crop&w=700&q=80',
+    image: windNacelleThermalImg,
     faultType: 'Gearbox Bearing Friction & Hydraulic Leakage',
     resolution: 'Radiometric Thermal Radiance Profile',
     efficiencyImpact: 'Predictive Maintenance Alert',
@@ -552,5 +602,18 @@ export const INITIAL_ENQUIRIES: Enquiry[] = [
     createdAt: '2026-09-02 11:15 AM',
     status: 'New',
     notes: 'Site visit coordination requested for next Tuesday. Thermography calibration required.'
+  },
+  {
+    id: 'wind-req-202',
+    fullName: 'M. Senthil Kumar (Muppandal Wind Power Assets)',
+    email: 'senthil.k@muppandalwind.in',
+    phone: '+91 98944 68231',
+    courseId: 'wind-inspection',
+    courseName: 'Wind Turbine Blade & Nacelle Drone UAV Survey',
+    preferredBatch: '15 Turbines (Vestas V110) · Udumalpet Wind Corridor',
+    message: 'Wind Farm: 15 Turbines (Vestas V110, 120m Hub Height) | Location: Udumalpet / Muppandal Pass | Scope: DNV-GL Blade Surface 0.1mm Crack Scan, Leading Edge Erosion, Lightning Receptor Conductivity, Nacelle Thermal IR | Target Schedule: Pre-Monsoon Audit',
+    createdAt: '2026-09-03 09:30 AM',
+    status: 'New',
+    notes: 'Requested autonomous UAV blade inspection before peak southwest monsoon wind season.'
   }
 ];
